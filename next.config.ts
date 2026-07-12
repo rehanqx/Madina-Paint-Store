@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/v0/b/**",
       },
+      {
+        protocol: "https",
+        hostname: "madinapaintst0re.firebasestorage.app",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 };
