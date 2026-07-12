@@ -1,49 +1,80 @@
-export interface User {
-  uid: string;
+export interface Booking {
+  id: string;
+  customerName: string;
+  phone: string;
   email: string;
-  displayName?: string;
-  role: "admin" | "customer";
+  address: string;
+  serviceType: string;
+  bookingDate: string;
+  bookingTime: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  notes: string;
+  createdAt: Date;
+  updatedAt: Date;
+  firebaseUid?: string;
 }
 
-export interface Booking {
+export interface Service {
+  id: string;
+  name: string;
+  description: string;
+  pricing: number;
+  image_urls: string[];
+  category: 'interior' | 'exterior' | 'commercial' | 'residential';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Gallery {
+  id: string;
+  image_url: string;
+  title: string;
+  service_category: string;
+  description: string;
+  order: number;
+  createdAt: Date;
+}
+
+export interface Inventory {
+  id: string;
+  productName: string;
+  color: string;
+  openingStock: number;
+  sold: number;
+  currentStock: number;
+  costPrice: number;
+  supplierName: string;
+  lastUpdated: Date;
+  excelVersion: number;
+}
+
+export interface Message {
   id: string;
   name: string;
   email: string;
   phone: string;
-  serviceType: string;
-  date: string; // YYYY-MM-DD
-  timeSlot: string; // e.g., "10:00 AM - 12:00 PM"
-  details?: string;
-  status: "pending" | "confirmed" | "completed" | "cancelled";
-  createdAt: string;
+  message: string;
+  read: boolean;
+  replied: boolean;
+  repliedAt?: Date;
+  createdAt: Date;
 }
 
-export interface PaintService {
-  id: string;
-  title: string;
-  description: string;
-  priceEstimate?: string;
-  imageUrl?: string;
-}
-
-export interface GalleryItem {
-  id: string;
-  title: string;
-  imageUrl: string;
-  category: string; // e.g., "interior", "exterior", "commercial", "residential"
-  description?: string;
-  createdAt: string;
-}
-
-export interface InventoryItem {
-  id: string;
+export interface Customer {
+  uid: string;
   name: string;
-  brand: string;
-  colorName: string;
-  hexCode?: string;
-  category: string; // e.g., "interior paint", "exterior paint", "primer", "tools"
-  size: string; // e.g., "1 Gallon", "5 Gallon"
-  price: number;
-  stockCount: number;
-  updatedAt: string;
+  email: string;
+  phone: string;
+  address: string;
+  createdAt: Date;
+  lastBookingDate?: Date;
+}
+
+export interface AdminUser {
+  uid: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'super_admin';
+  permissions: string[];
+  createdAt: Date;
 }

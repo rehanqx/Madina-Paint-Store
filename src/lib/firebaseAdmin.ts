@@ -1,21 +1,22 @@
-import { initializeApp, getApps, getApp, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-import { getAuth } from "firebase-admin/auth";
-import { getStorage } from "firebase-admin/storage";
+import * as admin from 'firebase-admin';
+import { getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
-const serviceAccount = process.env.FIREBASE_ADMIN_SDK_KEY
-  ? JSON.parse(process.env.FIREBASE_ADMIN_SDK_KEY)
-  : null;
+// Parse the service account key from environment variable safely
+const serviceAccountKey = JSON.parse(
+  process.env.FIREBASE_ADMIN_SDK_KEY || '{}'
+);
 
-const app = getApps().length > 0 
-  ? getApp() 
-  : initializeApp({
-      credential: serviceAccount ? cert(serviceAccount) : undefined,
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    });
+if (getApps().length === 0) {
+  admin.initializeApp({
+    credential: Object.keys(serviceAccountKey).length > 0
+      ? cert(serviceAccountKey)
+      : undefined,
+  });
+}
 
-const adminDb = getFirestore(app);
-const adminAuth = getAuth(app);
-const adminStorage = getStorage(app);
+export const adminDb = getFirestore();
+export const adminAuth = getAuth();
 
-export { adminDb, adminAuth, adminStorage };
+export default admin;

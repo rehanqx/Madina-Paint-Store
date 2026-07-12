@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Allow anyone to read public collections
+    match /services/{document=**} {
+      allow read: if true;
+      allow write: if request.auth.uid != null && hasRole('admin');
+    }
+    
+    match /gallery/{document=**} {
+      allow read: if true;
+      allow write: if request.auth.uid != null && hasRole('admin');
+    }
+    
+    // Bookings: customers can create, admins can read/update
+    match /bookings/{document=**} {
+      allow create: if true; // anyone can book
+      allow read: if request.auth.uid != null && hasRole('admin');
+      allow update: if request.auth.uid != null && hasRole('admin');
+      allow delete: if false;
+    }
+    
+    // Messages: anyone can create, only admin can read
+    match /messages/{document=**} {
+      allow create: if true;
+      allow read: if request.auth.uid != null && hasRole('admin');
+      allow update: if request.auth.uid != null && hasRole('admin');
+    }
+    
+    // Inventory: admin only
+    match /inventory/{document=**} {
+      allow read: if request.auth.uid != null && hasRole('admin');
+      allow write: if request.auth.uid != null && hasRole('admin');
+    }
+    
+    // Customers: logged-in users can read own, admin can read all
+    match /customers/{uid} {
+      allow read: if request.auth.uid == uid || hasRole('admin');
+      allow write: if request.auth.uid == uid && uid == request.auth.uid;
+    }
+    
+    // Admin users: admin only
+    match /admin_users/{document=**} {
+      allow read: if request.auth.uid != null && hasRole('admin');
+      allow write: if false; // managed programmatically only
+    }
+    
+    // Helper function
+    function hasRole(role) {
+      return get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data.role == role;
+    }
+  }
+}
