@@ -61,14 +61,14 @@ export default function AdminLayout({
           {/* Sidebar Navigation */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-1">
-              <nav className="space-y-1.5 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <nav className="flex flex-row md:flex-col overflow-x-auto md:overflow-visible gap-2 bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm scrollbar-none">
                 {navLinks.map((link) => {
                   const isActive = pathname === link.href;
                   return (
                     <Link
                       key={link.href}
                       href={link.href}
-                      className={`block px-4 py-2.5 rounded-lg text-sm font-semibold transition ${
+                      className={`block px-4 py-2.5 rounded-lg text-sm font-semibold transition whitespace-nowrap flex-shrink-0 ${
                         isActive
                           ? 'bg-[#2D5016] text-white'
                           : 'text-gray-700 hover:bg-gray-50 hover:text-[#2D5016]'
