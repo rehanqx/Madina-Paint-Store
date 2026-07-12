@@ -10,9 +10,13 @@ export function useLogin() {
     setLoading(true);
     setError(null);
     try {
+      console.log("Starting email login for:", email);
       const result = await signInWithEmailAndPassword(auth, email, password);
+      console.log("Auth success:", result.user.uid);
       return result.user;
     } catch (err: any) {
+      console.error("Login error code:", err.code);
+      console.error("Login error message:", err.message);
       const errorMessage = err.message || 'Failed to login';
       setError(errorMessage);
       throw err;
@@ -25,10 +29,14 @@ export function useLogin() {
     setLoading(true);
     setError(null);
     try {
+      console.log("Starting Google OAuth login");
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
+      console.log("Google Auth success:", result.user.uid);
       return result.user;
     } catch (err: any) {
+      console.error("Google Login error code:", err.code);
+      console.error("Google Login error message:", err.message);
       const errorMessage = err.message || 'Failed to login with Google';
       setError(errorMessage);
       throw err;

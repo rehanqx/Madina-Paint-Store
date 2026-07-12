@@ -98,19 +98,19 @@ export default function DashboardPage() {
         </div>
         <div className="flex flex-wrap gap-2.5">
           <Link
-            href="/dashboard/services-manager"
+            href="/admin/dashboard/services-manager"
             className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold transition whitespace-nowrap"
           >
             + Add Service
           </Link>
           <Link
-            href="/dashboard/inventory"
+            href="/admin/dashboard/inventory"
             className="px-4 py-2 bg-[#E8B44D] hover:bg-[#d4a03b] text-gray-900 rounded-lg text-xs font-bold transition whitespace-nowrap"
           >
             Upload Inventory
           </Link>
           <Link
-            href="/dashboard/bookings"
+            href="/admin/dashboard/bookings"
             className="px-4 py-2 bg-white text-[#2D5016] hover:bg-gray-100 rounded-lg text-xs font-bold transition whitespace-nowrap"
           >
             Manage Bookings
@@ -122,7 +122,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Total Bookings Card (Blue) */}
         <Link 
-          href="/dashboard/bookings"
+          href="/admin/dashboard/bookings"
           className="bg-white hover:bg-blue-50 border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition group block cursor-pointer"
         >
           <h2 className="text-gray-400 text-xs font-bold uppercase tracking-wider group-hover:text-blue-500 transition">Total Bookings</h2>
@@ -132,7 +132,7 @@ export default function DashboardPage() {
 
         {/* Pending Bookings Card (Yellow/Orange) */}
         <Link 
-          href="/dashboard/bookings?status=pending"
+          href="/admin/dashboard/bookings?status=pending"
           className="bg-white hover:bg-amber-50 border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition group block cursor-pointer"
         >
           <h2 className="text-gray-400 text-xs font-bold uppercase tracking-wider group-hover:text-amber-500 transition">Pending Bookings</h2>
@@ -142,7 +142,7 @@ export default function DashboardPage() {
 
         {/* Completed Bookings Card (Green) */}
         <Link 
-          href="/dashboard/bookings?status=completed"
+          href="/admin/dashboard/bookings?status=completed"
           className="bg-white hover:bg-emerald-50 border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition group block cursor-pointer"
         >
           <h2 className="text-gray-400 text-xs font-bold uppercase tracking-wider group-hover:text-emerald-500 transition">Completed Bookings</h2>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
 
         {/* Unread Messages Card (Purple) */}
         <Link 
-          href="/dashboard/messages"
+          href="/admin/dashboard/messages"
           className="bg-white hover:bg-purple-50 border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition group block cursor-pointer"
         >
           <h2 className="text-gray-400 text-xs font-bold uppercase tracking-wider group-hover:text-purple-500 transition">New Messages</h2>
@@ -162,7 +162,7 @@ export default function DashboardPage() {
 
         {/* Total Services Card (Blue) */}
         <Link 
-          href="/dashboard/services-manager"
+          href="/admin/dashboard/services-manager"
           className="bg-white hover:bg-sky-50 border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition group block cursor-pointer"
         >
           <h2 className="text-gray-400 text-xs font-bold uppercase tracking-wider group-hover:text-sky-500 transition">Total Services</h2>
@@ -172,7 +172,7 @@ export default function DashboardPage() {
 
         {/* Total Gallery Items Card (Green) */}
         <Link 
-          href="/dashboard/gallery-manager"
+          href="/admin/dashboard/gallery-manager"
           className="bg-white hover:bg-teal-50 border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition group block cursor-pointer"
         >
           <h2 className="text-gray-400 text-xs font-bold uppercase tracking-wider group-hover:text-teal-500 transition">Gallery Showcase</h2>
@@ -185,7 +185,7 @@ export default function DashboardPage() {
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center justify-between">
           <span>Recent Activity</span>
-          <Link href="/dashboard/bookings" className="text-sm font-bold text-[#2D5016] hover:underline">View All Bookings &rarr;</Link>
+          <Link href="/admin/dashboard/bookings" className="text-sm font-bold text-[#2D5016] hover:underline">View All Bookings &rarr;</Link>
         </h2>
 
         {recentBookings.length === 0 ? (

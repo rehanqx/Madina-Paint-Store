@@ -11,7 +11,7 @@ export function ProtectedAdminRoute({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (!loading) {
       if (!currentUser || !adminUser) {
-        router.push('/login');
+        router.push('/admin/login');
       }
     }
   }, [currentUser, adminUser, loading, router]);

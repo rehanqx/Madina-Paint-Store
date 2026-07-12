@@ -17,20 +17,20 @@ export default function AdminLayout({
   const handleLogout = async () => {
     try {
       await logout();
-      router.push('/login');
+      router.push('/admin/login');
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
 
   const navLinks = [
-    { href: '/dashboard', label: 'Dashboard' },
-    { href: '/dashboard/bookings', label: 'Bookings' },
-    { href: '/dashboard/inventory', label: 'Inventory' },
-    { href: '/dashboard/gallery-manager', label: 'Gallery' },
-    { href: '/dashboard/services-manager', label: 'Services' },
-    { href: '/dashboard/messages', label: 'Messages' },
-    { href: '/dashboard/activity-logs', label: 'Activity Logs' },
+    { href: '/admin/dashboard', label: 'Dashboard' },
+    { href: '/admin/dashboard/bookings', label: 'Bookings' },
+    { href: '/admin/dashboard/inventory', label: 'Inventory' },
+    { href: '/admin/dashboard/gallery-manager', label: 'Gallery' },
+    { href: '/admin/dashboard/services-manager', label: 'Services' },
+    { href: '/admin/dashboard/messages', label: 'Messages' },
+    { href: '/admin/dashboard/activity-logs', label: 'Activity Logs' },
   ];
 
   return (

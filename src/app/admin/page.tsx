@@ -1,28 +1,32 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
-export default function AdminPageRedirect() {
-  const { adminUser, loading } = useAuth();
+export default function AdminPage() {
+  const { currentUser, adminUser, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading) {
-      if (adminUser) {
-        router.replace('/dashboard');
+      if (currentUser && adminUser) {
+        // User is logged in and is admin
+        console.log("Redirecting to dashboard...");
+        router.push('/admin/dashboard');
       } else {
-        router.replace('/login');
+        // User not logged in or not admin
+        console.log("Redirecting to login...");
+        router.push('/admin/login');
       }
     }
-  }, [adminUser, loading, router]);
+  }, [currentUser, adminUser, loading, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2D5016] mx-auto mb-4"></div>
-        <p className="text-gray-600 font-semibold">Checking authorization...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading...</p>
       </div>
     </div>
   );

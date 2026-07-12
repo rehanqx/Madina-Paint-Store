@@ -29,24 +29,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("Auth state changed. User:", user?.uid);
+      
       if (user) {
         setCurrentUser(user);
         
-        // Check if user is admin
         try {
           const adminDocRef = doc(db, 'admin_users', user.uid);
           const adminDocSnap = await getDoc(adminDocRef);
           
+          console.log("Admin doc exists:", adminDocSnap.exists());
+          console.log("Admin doc data:", adminDocSnap.data());
+          
           if (adminDocSnap.exists()) {
             setAdminUser(adminDocSnap.data() as AdminUser);
+            console.log("User is admin!");
           } else {
             setAdminUser(null);
+            console.log("User is NOT admin");
           }
         } catch (error) {
           console.error('Error fetching admin data:', error);
           setAdminUser(null);
         }
       } else {
+        console.log("User logged out");
         setCurrentUser(null);
         setAdminUser(null);
       }
