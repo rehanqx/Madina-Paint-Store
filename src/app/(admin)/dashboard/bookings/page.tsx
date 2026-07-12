@@ -65,6 +65,13 @@ export default function AdminBookingsPage() {
 
   useEffect(() => {
     fetchBookings();
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get('status');
+      if (status) {
+        setStatusFilter(status);
+      }
+    }
   }, []);
 
   // Filter Bookings

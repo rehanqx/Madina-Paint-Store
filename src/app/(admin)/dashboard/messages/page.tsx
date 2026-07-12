@@ -1,6 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/useToast';
+import { getFriendlyErrorMessage } from '@/lib/errorHandler';
+import { useAuth } from '@/contexts/AuthContext';
+import { logAdminAction } from '@/lib/activityLog';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, updateDoc, deleteDoc, doc, writeBatch, query, orderBy } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
@@ -18,10 +22,11 @@ interface Message {
 }
 
 export default function AdminMessagesPage() {
+  const { adminUser } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const toast = useToast();
 
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,7 +53,7 @@ export default function AdminMessagesPage() {
       setMessages(messagesData);
     } catch (err) {
       console.error('Error fetching messages:', err);
-      showToast('Failed to load inbox messages', 'error');
+      toast.error('Failed to load inbox messages');
     } finally {
       setLoading(false);
     }
@@ -91,13 +96,7 @@ export default function AdminMessagesPage() {
     setSelectedIds([]); // clear selection on filter changes
   }, [messages, searchTerm, statusFilter]);
 
-  // Toast Helper
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => {
-      setToast(null);
-    }, 3000);
-  };
+
 
   // Metrics
   const totalCount = messages.filter((m) => !m.archived).length;
@@ -152,11 +151,11 @@ export default function AdminMessagesPage() {
         batch.update(docRef, { status: 'read' });
       });
       await batch.commit();
-      showToast(`Marked ${selectedIds.length} messages as read`, 'success');
+      toast.success(`Marked ${selectedIds.length} messages as read`);
       setSelectedIds([]);
       await fetchMessages();
     } catch (err) {
-      showToast('Failed to bulk update messages', 'error');
+      toast.error('Failed to bulk update messages');
     } finally {
       setIsMutating(true);
     }
@@ -173,11 +172,11 @@ export default function AdminMessagesPage() {
         batch.update(docRef, { archived: true });
       });
       await batch.commit();
-      showToast(`Archived ${selectedIds.length} messages`, 'success');
+      toast.success(`Archived ${selectedIds.length} messages`);
       setSelectedIds([]);
       await fetchMessages();
     } catch (err) {
-      showToast('Failed to bulk archive messages', 'error');
+      toast.error('Failed to bulk archive messages');
     } finally {
       setIsMutating(false);
     }
@@ -216,12 +215,12 @@ export default function AdminMessagesPage() {
         repliedAt: new Date(),
       });
 
-      showToast('Reply dispatched successfully!', 'success');
+      toast.success('Reply dispatched successfully!');
       setSelectedMessage(null);
       setReplyText('');
       await fetchMessages();
     } catch (err: any) {
-      showToast(err.message || 'SMTP reply dispatch error', 'error');
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setIsMutating(false);
     }
@@ -233,11 +232,11 @@ export default function AdminMessagesPage() {
     try {
       const docRef = doc(db, 'messages', id);
       await updateDoc(docRef, { archived: archiveState });
-      showToast(archiveState ? 'Message archived' : 'Message unarchived', 'success');
+      toast.success(archiveState ? 'Message archived' : 'Message unarchived');
       setSelectedMessage(null);
       await fetchMessages();
     } catch (err) {
-      showToast('Failed to update archive status', 'error');
+      toast.error('Failed to update archive status');
     } finally {
       setIsMutating(false);
     }
@@ -248,12 +247,12 @@ export default function AdminMessagesPage() {
     setIsMutating(true);
     try {
       await deleteDoc(doc(db, 'messages', id));
-      showToast('Message deleted successfully', 'success');
+      toast.success('Message deleted successfully');
       setDeleteConfirmId(null);
       setSelectedMessage(null);
       await fetchMessages();
     } catch (err) {
-      showToast('Failed to delete message', 'error');
+      toast.error('Failed to delete message');
     } finally {
       setIsMutating(false);
     }
@@ -282,19 +281,12 @@ export default function AdminMessagesPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Messages');
     XLSX.writeFile(workbook, 'Contact_Messages_Inbox.xlsx');
-    showToast('Inbox report exported successfully', 'success');
+    toast.success('Inbox report exported successfully');
   };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl printable-area">
-      {/* Toast Alert */}
-      {toast && (
-        <div className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-xl text-white font-semibold z-50 transition-all transform duration-300 translate-y-0 ${
-          toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
-        }`}>
-          {toast.type === 'success' ? '✓' : '⚠'} {toast.message}
-        </div>
-      )}
+
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 no-print">
