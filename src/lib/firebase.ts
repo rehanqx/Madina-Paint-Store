@@ -12,8 +12,24 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Safe initialization for Next.js hot-reloading environments
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+// Safe initialization for Next.js hot-reloading and build-time static generation
+let app;
+if (getApps().length > 0) {
+  app = getApp();
+} else if (firebaseConfig.apiKey) {
+  app = initializeApp(firebaseConfig);
+} else {
+  // Fallback to dummy config during build/prerendering phase if .env.local keys are not populated yet
+  app = initializeApp({
+    apiKey: "dummy-api-key-for-build-phase",
+    authDomain: "dummy-project.firebaseapp.com",
+    projectId: "dummy-project",
+    storageBucket: "dummy-project.appspot.com",
+    messagingSenderId: "1234567890",
+    appId: "1:1234567890:web:1234567890"
+  });
+}
+
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
