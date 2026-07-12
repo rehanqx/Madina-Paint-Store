@@ -1,30 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmail, getBookingStatusUpdateTemplate } from '@/lib/emailService';
+import { sendEmail, getBookingStatusUpdateTemplate, getCustomerReplyTemplate } from '@/lib/emailService';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { to, customerName, serviceType, bookingDate, bookingTime, status, notes } = body;
+    const {
+      type,
+      to,
+      customerName,
+      serviceType,
+      bookingDate,
+      bookingTime,
+      status,
+      notes,
+      originalMessage,
+      replyMessage,
+    } = body;
 
-    if (!to || !customerName || !serviceType || !bookingDate || !bookingTime || !status) {
+    if (!to || !customerName) {
       return NextResponse.json(
         { error: 'Missing required parameters' },
         { status: 400 }
       );
     }
 
-    const html = getBookingStatusUpdateTemplate(
-      customerName,
-      serviceType,
-      bookingDate,
-      bookingTime,
-      status,
-      notes || ''
-    );
+    let html = '';
+    let subject = '';
+
+    if (type === 'contact_reply') {
+      if (!originalMessage || !replyMessage) {
+        return NextResponse.json(
+          { error: 'Missing contact reply message fields' },
+          { status: 400 }
+        );
+      }
+      html = getCustomerReplyTemplate(customerName, originalMessage, replyMessage);
+      subject = `Reply to your Inquiry - Madina Paint Store`;
+    } else {
+      if (!serviceType || !bookingDate || !bookingTime || !status) {
+        return NextResponse.json(
+          { error: 'Missing booking status update fields' },
+          { status: 400 }
+        );
+      }
+      html = getBookingStatusUpdateTemplate(
+        customerName,
+        serviceType,
+        bookingDate,
+        bookingTime,
+        status,
+        notes || ''
+      );
+      subject = `Booking Status Updated: ${status.toUpperCase()} - Paint Shop`;
+    }
 
     const emailResult = await sendEmail({
       to,
-      subject: `Booking Status Updated: ${status.toUpperCase()} - Paint Shop`,
+      subject,
       html,
     });
 

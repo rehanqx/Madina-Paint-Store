@@ -217,3 +217,41 @@ export function getBookingStatusUpdateTemplate(
     </div>
   `;
 }
+
+// Email template: Customer Inquiry Reply
+export function getCustomerReplyTemplate(
+  customerName: string,
+  originalMessage: string,
+  replyMessage: string
+) {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #2D5016; color: white; padding: 24px; text-align: center;">
+        <h1 style="margin: 0; font-size: 24px;">Madina Paint Store</h1>
+        <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.9;">Response to Your Inquiry</p>
+      </div>
+      
+      <div style="padding: 24px; background-color: #f9f9f9; color: #333333;">
+        <p style="font-size: 16px; margin-top: 0;">Dear <strong>${customerName}</strong>,</p>
+        
+        <p>Thank you for contacting Madina Paint Store. Here is our response to your inquiry:</p>
+        
+        <div style="background-color: white; padding: 20px; border-left: 4px solid #2D5016; margin: 20px 0; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <p style="margin: 0 0 8px 0; font-weight: bold; color: #2D5016;">Our Response:</p>
+          <p style="margin: 0; white-space: pre-wrap; color: #111111; font-size: 15px; line-height: 1.5;">${replyMessage.replace(/\\n/g, '<br>')}</p>
+        </div>
+        
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 4px; margin: 20px 0; font-size: 13px; color: #555555;">
+          <p style="margin: 0 0 4px 0; font-weight: bold;">Your Original Message:</p>
+          <p style="margin: 0; font-style: italic;">"${originalMessage.replace(/\\n/g, '<br>')}"</p>
+        </div>
+        
+        <p>If you have any further questions, feel free to reply to this email or call us.</p>
+        
+        <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #999999; font-size: 12px;">
+          <p style="margin: 0;">&copy; 2026 Madina Paint Store. All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
