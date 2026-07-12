@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/useToast';
+import { getFriendlyErrorMessage } from '@/lib/errorHandler';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
@@ -32,7 +34,7 @@ export default function AdminInventoryPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const toast = useToast();
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -74,7 +76,7 @@ export default function AdminInventoryPage() {
       setInventory(inventoryData);
     } catch (err) {
       console.error('Error fetching inventory:', err);
-      showToast('Failed to load inventory items', 'error');
+      toast.error('Failed to load inventory items');
     } finally {
       setLoading(false);
     }
@@ -103,13 +105,7 @@ export default function AdminInventoryPage() {
     setFilteredInventory(result);
   }, [inventory, searchTerm, lowStockFilter, lowStockThreshold]);
 
-  // Toast banner helper
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => {
-      setToast(null);
-    }, 3000);
-  };
+
 
   // Metrics
   const totalProducts = inventory.length;
@@ -120,7 +116,7 @@ export default function AdminInventoryPage() {
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.color || formData.cost <= 0) {
-      showToast('Name, color, and positive cost are required', 'error');
+      toast.error('Name, color, and positive cost are required');
       return;
     }
 
@@ -135,12 +131,12 @@ export default function AdminInventoryPage() {
         supplier: formData.supplier || 'N/A',
         updatedAt: serverTimestamp(),
       });
-      showToast('Product added successfully', 'success');
+      toast.success('Product added successfully');
       setShowAddModal(false);
       setFormData({ name: '', color: '', currentStock: 0, soldCount: 0, cost: 0, supplier: '' });
       await fetchInventory();
     } catch (err: any) {
-      showToast(err.message || 'Failed to add product', 'error');
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setIsMutating(false);
     }
@@ -176,12 +172,12 @@ export default function AdminInventoryPage() {
         supplier: formData.supplier || 'N/A',
         updatedAt: serverTimestamp(),
       });
-      showToast('Product updated successfully', 'success');
+      toast.success('Product updated successfully');
       setShowEditModal(false);
       setSelectedItem(null);
       await fetchInventory();
     } catch (err: any) {
-      showToast(err.message || 'Failed to update product', 'error');
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setIsMutating(false);
     }
@@ -192,12 +188,12 @@ export default function AdminInventoryPage() {
     setIsMutating(true);
     try {
       await deleteDoc(doc(db, 'inventory', id));
-      showToast('Product deleted successfully', 'success');
+      toast.success('Product deleted successfully');
       setDeleteConfirmId(null);
       setShowEditModal(false);
       await fetchInventory();
     } catch (err: any) {
-      showToast(err.message || 'Failed to delete product', 'error');
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setIsMutating(false);
     }
@@ -236,13 +232,13 @@ export default function AdminInventoryPage() {
           .filter((item) => item.name && item.color && item.cost >= 0);
 
         if (parsedRows.length === 0) {
-          showToast('No valid inventory rows found in Excel sheet', 'error');
+          toast.error('No valid inventory rows found in Excel sheet');
           return;
         }
 
         setExcelPreview(parsedRows);
       } catch (err) {
-        showToast('Failed to parse Excel file', 'error');
+        toast.error('Failed to parse Excel file');
       }
     };
     reader.readAsBinaryString(file);
@@ -267,7 +263,7 @@ export default function AdminInventoryPage() {
     if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
       parseExcelFile(file);
     } else {
-      showToast('Please upload a valid Excel workbook file', 'error');
+      toast.error('Please upload a valid Excel workbook file');
     }
   };
 
@@ -302,11 +298,11 @@ export default function AdminInventoryPage() {
       });
 
       await batch.commit();
-      showToast(`Successfully imported ${excelPreview.length} items!`, 'success');
+      toast.success(`Successfully imported ${excelPreview.length} items!`);
       setExcelPreview(null);
       await fetchInventory();
     } catch (err) {
-      showToast('Failed to batch upload Excel data', 'error');
+      toast.error('Failed to batch upload Excel data');
     } finally {
       setIsMutating(false);
     }
@@ -328,7 +324,7 @@ export default function AdminInventoryPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Paint Inventory');
     XLSX.writeFile(workbook, 'Paint_Shop_Inventory.xlsx');
-    showToast('Inventory exported successfully', 'success');
+    toast.success('Inventory exported successfully');
   };
 
   // Export Excel Template
@@ -356,19 +352,12 @@ export default function AdminInventoryPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
     XLSX.writeFile(workbook, 'Inventory_Import_Template.xlsx');
-    showToast('Template downloaded successfully', 'success');
+    toast.success('Template downloaded successfully');
   };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      {/* Toast Notification Banner */}
-      {toast && (
-        <div className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-xl text-white font-semibold z-50 transition-all transform duration-300 translate-y-0 ${
-          toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
-        }`}>
-          {toast.type === 'success' ? '✓' : '⚠'} {toast.message}
-        </div>
-      )}
+
 
       {/* Header and Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">

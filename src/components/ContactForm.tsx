@@ -2,9 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/useToast';
+import { getFriendlyErrorMessage } from '@/lib/errorHandler';
 
 export function ContactForm() {
   const router = useRouter();
+  const toast = useToast();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -13,8 +16,7 @@ export function ContactForm() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -22,31 +24,37 @@ export function ContactForm() {
       ...prev,
       [name]: value,
     }));
-    setError('');
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
 
   const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
     if (!formData.name.trim()) {
-      setError('Please enter your name');
-      return false;
+      newErrors.name = 'Please enter your name';
     }
     if (!formData.email.trim()) {
-      setError('Please enter your email address');
-      return false;
+      newErrors.email = 'Please enter your email address';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setError('Please enter a valid email address');
-      return false;
-    }
-    if (formData.phone.trim() && !/^[0-9+\-\s()]+$/.test(formData.phone)) {
-      setError('Please enter a valid phone number');
-      return false;
+    if (formData.phone.trim() && !/^[0-9+\-\s()]{7,15}$/.test(formData.phone)) {
+      newErrors.phone = 'Please enter a valid phone number (7-15 digits)';
     }
     if (!formData.message.trim()) {
-      setError('Please enter your message');
-      return false;
+      newErrors.message = 'Please enter your message';
     }
-    return true;
+
+    setErrors(newErrors);
+    const isValid = Object.keys(newErrors).length === 0;
+
+    if (!isValid) {
+      toast.error('Please correct the validation errors in the form.');
+    }
+
+    return isValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +65,6 @@ export function ContactForm() {
     }
 
     setLoading(true);
-    setError('');
 
     try {
       const response = await fetch('/api/contact', {
@@ -73,7 +80,7 @@ export function ContactForm() {
         throw new Error(data.error || 'Failed to submit inquiry');
       }
 
-      setSuccess(true);
+      toast.success('Inquiry submitted successfully!');
       setFormData({
         name: '',
         email: '',
@@ -83,9 +90,10 @@ export function ContactForm() {
 
       setTimeout(() => {
         router.push('/contact/success');
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
-      setError(err.message || 'Failed to send message. Please try again later.');
+      const msg = getFriendlyErrorMessage(err);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -95,18 +103,6 @@ export function ContactForm() {
     <div className="bg-white rounded-xl border border-gray-200 shadow-xl p-8">
       <h2 className="text-2xl font-extrabold text-[#2D5016] mb-2">Send us a Message</h2>
       <p className="text-gray-500 mb-8 text-sm">Have a question or custom request? Fill in the form below.</p>
-
-      {success && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm font-semibold">
-          ✓ Message sent successfully! Redirecting shortly...
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm font-semibold">
-          ⚠ {error}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Name */}
@@ -120,9 +116,14 @@ export function ContactForm() {
             value={formData.name}
             onChange={handleChange}
             placeholder="Enter your full name"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent outline-none transition"
+            className={`w-full px-4 py-2.5 border rounded-lg outline-none transition focus:ring-2 focus:border-transparent ${
+              errors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-[#2D5016]'
+            }`}
             required
           />
+          {errors.name && (
+            <p className="text-red-500 text-xs mt-1.5 font-semibold">{errors.name}</p>
+          )}
         </div>
 
         {/* Email */}
@@ -136,9 +137,14 @@ export function ContactForm() {
             value={formData.email}
             onChange={handleChange}
             placeholder="your@email.com"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent outline-none transition"
+            className={`w-full px-4 py-2.5 border rounded-lg outline-none transition focus:ring-2 focus:border-transparent ${
+              errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-[#2D5016]'
+            }`}
             required
           />
+          {errors.email && (
+            <p className="text-red-500 text-xs mt-1.5 font-semibold">{errors.email}</p>
+          )}
         </div>
 
         {/* Phone */}
@@ -152,8 +158,13 @@ export function ContactForm() {
             value={formData.phone}
             onChange={handleChange}
             placeholder="+92 300 1234567"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent outline-none transition"
+            className={`w-full px-4 py-2.5 border rounded-lg outline-none transition focus:ring-2 focus:border-transparent ${
+              errors.phone ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-[#2D5016]'
+            }`}
           />
+          {errors.phone && (
+            <p className="text-red-500 text-xs mt-1.5 font-semibold">{errors.phone}</p>
+          )}
         </div>
 
         {/* Message */}
@@ -167,9 +178,14 @@ export function ContactForm() {
             onChange={handleChange}
             placeholder="Describe your project, color specifications or general questions..."
             rows={4}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent outline-none transition"
+            className={`w-full px-4 py-2.5 border rounded-lg outline-none transition focus:ring-2 focus:border-transparent ${
+              errors.message ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-[#2D5016]'
+            }`}
             required
           />
+          {errors.message && (
+            <p className="text-red-500 text-xs mt-1.5 font-semibold">{errors.message}</p>
+          )}
         </div>
 
         {/* Submit Button */}

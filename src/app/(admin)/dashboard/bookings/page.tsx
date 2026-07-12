@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/useToast';
+import { getFriendlyErrorMessage } from '@/lib/errorHandler';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, updateDoc, doc, query, orderBy } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
@@ -23,7 +25,7 @@ export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const toast = useToast();
 
   // Filters & Views
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,7 +54,7 @@ export default function AdminBookingsPage() {
       setBookings(bookingsData);
     } catch (err) {
       console.error('Error fetching bookings:', err);
-      showToast('Failed to load bookings', 'error');
+      toast.error('Failed to load bookings');
     } finally {
       setLoading(false);
     }
@@ -81,13 +83,7 @@ export default function AdminBookingsPage() {
     setFilteredBookings(result);
   }, [bookings, searchTerm, statusFilter]);
 
-  // Toast Helper
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => {
-      setToast(null);
-    }, 3000);
-  };
+
 
   // Metrics
   const totalCount = bookings.length;
@@ -123,7 +119,7 @@ export default function AdminBookingsPage() {
       const docRef = doc(db, 'bookings', bookingId);
       await updateDoc(docRef, { status, notes: statusNotes, updatedAt: new Date() });
 
-      showToast(`Booking marked as ${status}!`, 'success');
+      toast.success(`Booking marked as ${status}!`);
 
       // Trigger server email notification
       await sendStatusEmail(selectedBooking, status, statusNotes);
@@ -134,7 +130,7 @@ export default function AdminBookingsPage() {
       setCancelReason('');
       await fetchBookings();
     } catch (err) {
-      showToast('Failed to update booking status', 'error');
+      toast.error('Failed to update booking status');
     } finally {
       setIsMutating(false);
     }
@@ -159,7 +155,7 @@ export default function AdminBookingsPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Bookings');
     XLSX.writeFile(workbook, 'Madina_Paint_Shop_Bookings.xlsx');
-    showToast('Bookings report exported successfully', 'success');
+    toast.success('Bookings report exported successfully');
   };
 
   // WhatsApp Link Helper
@@ -237,14 +233,7 @@ export default function AdminBookingsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl printable-area">
-      {/* Toast Alerts */}
-      {toast && (
-        <div className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-xl text-white font-semibold z-50 transition-all transform duration-300 translate-y-0 ${
-          toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
-        }`}>
-          {toast.type === 'success' ? '✓' : '⚠'} {toast.message}
-        </div>
-      )}
+
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 no-print">
@@ -613,7 +602,7 @@ export default function AdminBookingsPage() {
                     // Update notes if changed
                     if (notes !== selectedBooking.notes) {
                       updateDoc(doc(db, 'bookings', selectedBooking.id), { notes });
-                      showToast('Internal notes saved!', 'success');
+                      toast.success('Internal notes saved!');
                     }
                     setSelectedBooking(null);
                     fetchBookings();

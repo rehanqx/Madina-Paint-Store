@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/useToast';
+import { getFriendlyErrorMessage } from '@/lib/errorHandler';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, where } from 'firebase/firestore';
 
@@ -18,7 +20,7 @@ export default function AdminServicesManagerPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [filteredServices, setFilteredServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const toast = useToast();
 
   // Filters & Sorting
   const [searchTerm, setSearchTerm] = useState('');
@@ -63,7 +65,7 @@ export default function AdminServicesManagerPage() {
       setServices(servicesData);
     } catch (err) {
       console.error('Error fetching services:', err);
-      showToast('Failed to load services', 'error');
+      toast.error('Failed to load services');
     } finally {
       setLoading(false);
     }
@@ -100,13 +102,7 @@ export default function AdminServicesManagerPage() {
     setFilteredServices(result);
   }, [services, searchTerm, categoryFilter, sortBy]);
 
-  // Toast Helper
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => {
-      setToast(null);
-    }, 3000);
-  };
+
 
   // Add new Image URL to local list
   const handleAddImageUrl = () => {
@@ -136,7 +132,7 @@ export default function AdminServicesManagerPage() {
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || formData.pricing <= 0) {
-      showToast('Name and pricing are required', 'error');
+      toast.error('Name and pricing are required');
       return;
     }
 
@@ -152,13 +148,13 @@ export default function AdminServicesManagerPage() {
         createdAt: new Date(),
       });
 
-      showToast('Service created successfully', 'success');
+      toast.success('Service created successfully');
       setShowAddModal(false);
       setFormData({ name: '', description: '', category: 'interior', pricing: 0, order: services.length + 1 });
       setImageUrlList([]);
       await fetchServices();
     } catch (err: any) {
-      showToast(err.message || 'Failed to create service', 'error');
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setIsMutating(false);
     }
@@ -194,13 +190,13 @@ export default function AdminServicesManagerPage() {
         order: Number(formData.order),
       });
 
-      showToast('Service updated successfully', 'success');
+      toast.success('Service updated successfully');
       setShowEditModal(false);
       setSelectedService(null);
       setImageUrlList([]);
       await fetchServices();
     } catch (err: any) {
-      showToast(err.message || 'Failed to update service', 'error');
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setIsMutating(false);
     }
@@ -228,13 +224,13 @@ export default function AdminServicesManagerPage() {
     setIsMutating(true);
     try {
       await deleteDoc(doc(db, 'services', id));
-      showToast('Service deleted successfully', 'success');
+      toast.success('Service deleted successfully');
       setDeleteConfirmId(null);
       setBookingWarningCount(null);
       setShowEditModal(false);
       await fetchServices();
     } catch (err: any) {
-      showToast('Failed to delete service', 'error');
+      toast.error('Failed to delete service');
     } finally {
       setIsMutating(false);
     }
@@ -257,10 +253,10 @@ export default function AdminServicesManagerPage() {
       await updateDoc(doc(db, 'services', itemA.id), { order: itemA.order });
       await updateDoc(doc(db, 'services', itemB.id), { order: itemB.order });
 
-      showToast('Position updated', 'success');
+      toast.success('Position updated');
       await fetchServices();
     } catch (err) {
-      showToast('Failed to reorder services', 'error');
+      toast.error('Failed to reorder services');
     } finally {
       setIsMutating(false);
     }
@@ -307,10 +303,10 @@ export default function AdminServicesManagerPage() {
       });
 
       await Promise.all(updatePromises);
-      showToast('Sequence reordered successfully!', 'success');
+      toast.success('Sequence reordered successfully!');
       await fetchServices();
     } catch (err) {
-      showToast('Failed to save drag-drop order', 'error');
+      toast.error('Failed to save drag-drop order');
     } finally {
       setDraggedIndex(null);
       setIsMutating(false);
@@ -319,14 +315,7 @@ export default function AdminServicesManagerPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      {/* Toast banners */}
-      {toast && (
-        <div className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-xl text-white font-semibold z-50 transition-all transform duration-300 translate-y-0 ${
-          toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
-        }`}>
-          {toast.type === 'success' ? '✓' : '⚠'} {toast.message}
-        </div>
-      )}
+
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">

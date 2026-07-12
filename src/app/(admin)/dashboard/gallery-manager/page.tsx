@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/useToast';
+import { getFriendlyErrorMessage } from '@/lib/errorHandler';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 
@@ -17,7 +19,7 @@ export default function AdminGalleryManagerPage() {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const toast = useToast();
 
   // Filter & Sort States
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,7 +59,7 @@ export default function AdminGalleryManagerPage() {
       setGallery(galleryData);
     } catch (err: any) {
       console.error('Error loading gallery:', err);
-      showToast('Failed to load gallery items', 'error');
+      toast.error('Failed to load gallery items');
     } finally {
       setLoading(false);
     }
@@ -95,19 +97,13 @@ export default function AdminGalleryManagerPage() {
     setFilteredItems(result);
   }, [gallery, searchTerm, categoryFilter, sortBy]);
 
-  // Toast helper
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => {
-      setToast(null);
-    }, 3000);
-  };
+
 
   // Add Item Submit
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.image_url) {
-      showToast('Title and Image URL are required', 'error');
+      toast.error('Title and Image URL are required');
       return;
     }
     setIsMutating(true);
@@ -121,7 +117,7 @@ export default function AdminGalleryManagerPage() {
         order: Number(formData.order),
         createdAt: new Date(),
       });
-      showToast('Gallery item added successfully!', 'success');
+      toast.success('Gallery item added successfully!');
       setShowAddModal(false);
       setFormData({
         title: '',
@@ -132,7 +128,7 @@ export default function AdminGalleryManagerPage() {
       });
       await fetchGallery();
     } catch (err: any) {
-      showToast(err.message || 'Failed to add item', 'error');
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setIsMutating(false);
     }
@@ -165,12 +161,12 @@ export default function AdminGalleryManagerPage() {
         description: formData.description,
         order: Number(formData.order),
       });
-      showToast('Gallery item updated successfully!', 'success');
+      toast.success('Gallery item updated successfully!');
       setShowEditModal(false);
       setSelectedItem(null);
       await fetchGallery();
     } catch (err: any) {
-      showToast(err.message || 'Failed to update item', 'error');
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setIsMutating(false);
     }
@@ -181,12 +177,12 @@ export default function AdminGalleryManagerPage() {
     setIsMutating(true);
     try {
       await deleteDoc(doc(db, 'gallery', id));
-      showToast('Item deleted successfully!', 'success');
+      toast.success('Item deleted successfully!');
       setDeleteConfirmId(null);
       setShowEditModal(false);
       await fetchGallery();
     } catch (err: any) {
-      showToast(err.message || 'Failed to delete item', 'error');
+      toast.error(getFriendlyErrorMessage(err));
     } finally {
       setIsMutating(false);
     }
@@ -209,10 +205,10 @@ export default function AdminGalleryManagerPage() {
       await updateDoc(doc(db, 'gallery', itemA.id), { order: itemA.order });
       await updateDoc(doc(db, 'gallery', itemB.id), { order: itemB.order });
 
-      showToast('Position updated!', 'success');
+      toast.success('Position updated!');
       await fetchGallery();
     } catch (err: any) {
-      showToast('Failed to swap positions', 'error');
+      toast.error('Failed to swap positions');
     } finally {
       setIsMutating(false);
     }
@@ -259,10 +255,10 @@ export default function AdminGalleryManagerPage() {
       });
 
       await Promise.all(updatePromises);
-      showToast('Sequence reordered successfully!', 'success');
+      toast.success('Sequence reordered successfully!');
       await fetchGallery();
     } catch (err) {
-      showToast('Failed to save drag-drop order', 'error');
+      toast.error('Failed to save drag-drop order');
     } finally {
       setDraggedIndex(null);
       setIsMutating(false);
@@ -271,14 +267,7 @@ export default function AdminGalleryManagerPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      {/* Toast Alert Banner */}
-      {toast && (
-        <div className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-xl text-white font-semibold z-50 transition-all transform duration-300 translate-y-0 ${
-          toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
-        }`}>
-          {toast.type === 'success' ? '✓' : '⚠'} {toast.message}
-        </div>
-      )}
+
 
       {/* Header and Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
