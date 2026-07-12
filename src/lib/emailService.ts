@@ -161,3 +161,59 @@ export function getAdminWelcomeTemplate(adminEmail: string, password: string) {
     </div>
   `;
 }
+
+// Email template: Booking status update
+export function getBookingStatusUpdateTemplate(
+  customerName: string,
+  serviceType: string,
+  bookingDate: string,
+  bookingTime: string,
+  status: 'confirmed' | 'completed' | 'cancelled' | 'rescheduled' | string,
+  notes?: string
+) {
+  let statusColor = '#2D5016'; // green
+  let statusLabel = status.toUpperCase();
+
+  if (status === 'confirmed') {
+    statusColor = '#1D4ED8'; // blue
+  } else if (status === 'cancelled') {
+    statusColor = '#DC2626'; // red
+  } else if (status === 'rescheduled') {
+    statusColor = '#D97706'; // orange/amber
+  }
+
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: ${statusColor}; color: white; padding: 24px; text-align: center;">
+        <h1 style="margin: 0; font-size: 24px;">Madina Paint Store</h1>
+        <p style="margin: 4px 0 0 0; font-size: 14px; opacity: 0.9;">Booking Status Update: ${statusLabel}</p>
+      </div>
+      
+      <div style="padding: 24px; background-color: #f9f9f9; color: #333333;">
+        <p style="font-size: 16px; margin-top: 0;">Dear <strong>${customerName}</strong>,</p>
+        
+        <p>The status of your service booking has been updated to: <strong style="color: ${statusColor};">${statusLabel}</strong>.</p>
+        
+        <div style="background-color: white; padding: 20px; border-left: 4px solid ${statusColor}; margin: 20px 0; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <p style="margin: 0 0 8px 0;"><strong>Service Type:</strong> ${serviceType}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Date:</strong> ${bookingDate}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Time Slot:</strong> ${bookingTime}</p>
+          <p style="margin: 0;"><strong>Current Status:</strong> <span style="color: ${statusColor}; font-weight: bold; text-transform: uppercase;">${statusLabel}</span></p>
+        </div>
+        
+        ${notes ? `
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 4px; margin: 20px 0; font-size: 14px;">
+          <p style="margin: 0 0 4px 0; font-weight: bold; color: #4b5563;">Update Notes:</p>
+          <p style="margin: 0; color: #1f2937; font-style: italic;">${notes.replace(/\\n/g, '<br>')}</p>
+        </div>
+        ` : ''}
+        
+        <p>If you have any questions or need to make further adjustments, feel free to reply to this email or contact us.</p>
+        
+        <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #999999; font-size: 12px;">
+          <p style="margin: 0;">&copy; 2026 Madina Paint Store. All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
