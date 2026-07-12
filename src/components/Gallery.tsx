@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { useState } from 'react';
+import OptimizedImage from '@/components/OptimizedImage';
 
 interface GalleryItem {
   id: string;
@@ -21,36 +20,15 @@ const categories = [
   { id: 'residential', label: 'Residential' },
 ];
 
-export function Gallery() {
-  const [images, setImages] = useState<GalleryItem[]>([]);
-  const [filteredImages, setFilteredImages] = useState<GalleryItem[]>([]);
+interface GalleryProps {
+  initialImages: GalleryItem[];
+}
+
+export function Gallery({ initialImages }: GalleryProps) {
+  const [images] = useState<GalleryItem[]>(initialImages);
+  const [filteredImages, setFilteredImages] = useState<GalleryItem[]>(initialImages);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
-
-  useEffect(() => {
-    async function fetchGallery() {
-      try {
-        const galleryRef = collection(db, 'gallery');
-        const q = query(galleryRef, orderBy('order', 'asc'));
-        const snapshot = await getDocs(q);
-        const galleryData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as GalleryItem[];
-        setImages(galleryData);
-        setFilteredImages(galleryData);
-      } catch (err) {
-        console.error('Error fetching gallery:', err);
-        setError('Failed to load gallery. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchGallery();
-  }, []);
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -63,25 +41,8 @@ export function Gallery() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2D5016] mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading portfolio gallery...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="py-16">
-      {error && (
-        <div className="mb-8 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm font-semibold">
-          {error}
-        </div>
-      )}
-
       {/* Category Filter */}
       <div className="flex flex-wrap justify-center gap-3 mb-12">
         {categories.map((category) => (
@@ -113,14 +74,12 @@ export function Gallery() {
               onClick={() => setSelectedImage(image)}
             >
               <div className="relative h-64 bg-gray-200 overflow-hidden">
-                <img
+                <OptimizedImage
                   src={image.image_url}
                   alt={image.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%23e5e7eb" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="20" fill="%239ca3af"%3EImage not available%3C/text%3E%3C/svg%3E';
-                  }}
+                  className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
               </div>
 
@@ -162,14 +121,12 @@ export function Gallery() {
 
             <div className="p-6">
               <div className="relative h-96 bg-gray-100 rounded-lg overflow-hidden mb-6 border border-gray-200 shadow-sm">
-                <img
+                <OptimizedImage
                   src={selectedImage.image_url}
                   alt={selectedImage.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400"%3E%3Crect fill="%23e5e7eb" width="600" height="400"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="24" fill="%239ca3af"%3EImage not available%3C/text%3E%3C/svg%3E';
-                  }}
+                  className="object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 80vw"
                 />
               </div>
 

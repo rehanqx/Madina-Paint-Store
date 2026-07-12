@@ -1,12 +1,42 @@
 import { Gallery } from '@/components/Gallery';
 import Link from 'next/link';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+
+interface GalleryItem {
+  id: string;
+  image_url: string;
+  title: string;
+  service_category: string;
+  description: string;
+  order: number;
+}
+
+export const revalidate = 60; // ISR: Revalidate every 60 seconds
 
 export const metadata = {
   title: 'Gallery - Madina Paint Store',
   description: 'View our portfolio of completed professional painting projects',
 };
 
-export default function GalleryPage() {
+async function getGalleryItems() {
+  try {
+    const galleryRef = collection(db, 'gallery');
+    const q = query(galleryRef, orderBy('order', 'asc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as GalleryItem[];
+  } catch (err) {
+    console.error('Error fetching gallery on server:', err);
+    return [];
+  }
+}
+
+export default async function GalleryPage() {
+  const images = await getGalleryItems();
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -22,7 +52,7 @@ export default function GalleryPage() {
 
       {/* Gallery Showcase */}
       <div className="max-w-6xl mx-auto px-4 py-12">
-        <Gallery />
+        <Gallery initialImages={images} />
       </div>
 
       {/* Contact CTA */}

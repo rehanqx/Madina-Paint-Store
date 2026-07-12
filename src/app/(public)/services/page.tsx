@@ -1,9 +1,7 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import Link from 'next/link';
+import OptimizedImage from '@/components/OptimizedImage';
 
 interface Service {
   id: string;
@@ -12,46 +10,32 @@ interface Service {
   pricing: number;
   image_urls: string[];
   category: string;
-  createdAt: any;
 }
 
-export default function ServicesPage() {
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+export const revalidate = 60; // ISR: Revalidate every 60 seconds
 
-  useEffect(() => {
-    async function fetchServices() {
-      try {
-        const servicesRef = collection(db, 'services');
-        const q = query(servicesRef, orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
-        const servicesData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Service[];
-        setServices(servicesData);
-      } catch (err) {
-        console.error('Error fetching services:', err);
-        setError('Failed to load services. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    }
+export const metadata = {
+  title: 'Painting Services Catalog - Madina Paint Store',
+  description: 'Explore our premium selection of interior, exterior, commercial, and residential painting packages.',
+};
 
-    fetchServices();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2D5016] mx-auto mb-4"></div>
-          <p className="text-gray-600 font-semibold">Loading services...</p>
-        </div>
-      </div>
-    );
+async function getServices() {
+  try {
+    const servicesRef = collection(db, 'services');
+    const q = query(servicesRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Service[];
+  } catch (err) {
+    console.error('Error fetching services on server:', err);
+    return [];
   }
+}
+
+export default async function ServicesPage() {
+  const services = await getServices();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -68,12 +52,6 @@ export default function ServicesPage() {
 
       {/* Services Grid */}
       <div className="max-w-6xl mx-auto px-4 py-16">
-        {error && (
-          <div className="mb-8 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm font-semibold">
-            {error}
-          </div>
-        )}
-
         {services.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-gray-500 text-lg font-medium">No painting services available at the moment.</p>
@@ -88,14 +66,12 @@ export default function ServicesPage() {
                 {/* Service Image */}
                 <div className="relative h-64 bg-gray-200 overflow-hidden">
                   {service.image_urls && service.image_urls.length > 0 ? (
-                    <img
+                    <OptimizedImage
                       src={service.image_urls[0]}
                       alt={service.name}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"%3E%3Crect fill="%23e5e7eb" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="20" fill="%239ca3af"%3EImage not available%3C/text%3E%3C/svg%3E';
-                      }}
+                      className="object-cover hover:scale-105 transition-transform duration-500"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gray-100">
