@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/useToast';
 import { getFriendlyErrorMessage } from '@/lib/errorHandler';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
+import { logAdminAction } from '@/lib/activityLog';
 import { collection, getDocs, updateDoc, doc, query, orderBy } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
 
@@ -22,6 +24,7 @@ interface Booking {
 }
 
 export default function AdminBookingsPage() {
+  const { adminUser } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,7 +121,7 @@ export default function AdminBookingsPage() {
     try {
       const docRef = doc(db, 'bookings', bookingId);
       await updateDoc(docRef, { status, notes: statusNotes, updatedAt: new Date() });
-
+      await logAdminAction(adminUser?.email, 'UPDATE_BOOKING', `Changed booking status to ${status} for ${selectedBooking?.customerName || bookingId}`);
       toast.success(`Booking marked as ${status}!`);
 
       // Trigger server email notification
@@ -598,10 +601,11 @@ export default function AdminBookingsPage() {
               {/* Close Button */}
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 no-print">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     // Update notes if changed
                     if (notes !== selectedBooking.notes) {
-                      updateDoc(doc(db, 'bookings', selectedBooking.id), { notes });
+                      await updateDoc(doc(db, 'bookings', selectedBooking.id), { notes });
+                      await logAdminAction(adminUser?.email, 'SAVE_BOOKING_NOTES', `Updated internal notes for booking of ${selectedBooking.customerName}`);
                       toast.success('Internal notes saved!');
                     }
                     setSelectedBooking(null);

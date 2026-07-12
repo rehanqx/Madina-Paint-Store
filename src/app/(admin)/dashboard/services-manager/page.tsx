@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/useToast';
 import { getFriendlyErrorMessage } from '@/lib/errorHandler';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
+import { logAdminAction } from '@/lib/activityLog';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, where } from 'firebase/firestore';
 
 interface Service {
@@ -17,6 +19,7 @@ interface Service {
 }
 
 export default function AdminServicesManagerPage() {
+  const { adminUser } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [filteredServices, setFilteredServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +150,7 @@ export default function AdminServicesManagerPage() {
         order: Number(formData.order),
         createdAt: new Date(),
       });
-
+      await logAdminAction(adminUser?.email, 'ADD_SERVICE', `Created painting service: "${formData.name}"`);
       toast.success('Service created successfully');
       setShowAddModal(false);
       setFormData({ name: '', description: '', category: 'interior', pricing: 0, order: services.length + 1 });
@@ -224,6 +227,7 @@ export default function AdminServicesManagerPage() {
     setIsMutating(true);
     try {
       await deleteDoc(doc(db, 'services', id));
+      await logAdminAction(adminUser?.email, 'DELETE_SERVICE', `Deleted service ID: ${id}`);
       toast.success('Service deleted successfully');
       setDeleteConfirmId(null);
       setBookingWarningCount(null);

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/useToast';
 import { getFriendlyErrorMessage } from '@/lib/errorHandler';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
+import { logAdminAction } from '@/lib/activityLog';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import * as XLSX from 'xlsx';
 
@@ -31,6 +33,7 @@ interface ExcelRow {
 }
 
 export default function AdminInventoryPage() {
+  const { adminUser } = useAuth();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [filteredInventory, setFilteredInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,6 +134,7 @@ export default function AdminInventoryPage() {
         supplier: formData.supplier || 'N/A',
         updatedAt: serverTimestamp(),
       });
+      await logAdminAction(adminUser?.email, 'ADD_INVENTORY', `Added product: "${formData.name}" (${formData.color})`);
       toast.success('Product added successfully');
       setShowAddModal(false);
       setFormData({ name: '', color: '', currentStock: 0, soldCount: 0, cost: 0, supplier: '' });
@@ -188,6 +192,7 @@ export default function AdminInventoryPage() {
     setIsMutating(true);
     try {
       await deleteDoc(doc(db, 'inventory', id));
+      await logAdminAction(adminUser?.email, 'DELETE_INVENTORY', `Deleted product ID: ${id}`);
       toast.success('Product deleted successfully');
       setDeleteConfirmId(null);
       setShowEditModal(false);
@@ -298,6 +303,7 @@ export default function AdminInventoryPage() {
       });
 
       await batch.commit();
+      await logAdminAction(adminUser?.email, 'EXCEL_IMPORT', `Imported ${excelPreview.length} products via Excel`);
       toast.success(`Successfully imported ${excelPreview.length} items!`);
       setExcelPreview(null);
       await fetchInventory();

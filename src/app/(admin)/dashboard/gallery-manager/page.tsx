@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/useToast';
 import { getFriendlyErrorMessage } from '@/lib/errorHandler';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
+import { logAdminAction } from '@/lib/activityLog';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 
 interface GalleryItem {
@@ -16,6 +18,7 @@ interface GalleryItem {
 }
 
 export default function AdminGalleryManagerPage() {
+  const { adminUser } = useAuth();
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,6 +120,7 @@ export default function AdminGalleryManagerPage() {
         order: Number(formData.order),
         createdAt: new Date(),
       });
+      await logAdminAction(adminUser?.email, 'ADD_GALLERY_ITEM', `Added gallery item: "${formData.title}"`);
       toast.success('Gallery item added successfully!');
       setShowAddModal(false);
       setFormData({
@@ -161,6 +165,7 @@ export default function AdminGalleryManagerPage() {
         description: formData.description,
         order: Number(formData.order),
       });
+      await logAdminAction(adminUser?.email, 'UPDATE_GALLERY_ITEM', `Updated gallery item: "${formData.title}"`);
       toast.success('Gallery item updated successfully!');
       setShowEditModal(false);
       setSelectedItem(null);
@@ -177,6 +182,7 @@ export default function AdminGalleryManagerPage() {
     setIsMutating(true);
     try {
       await deleteDoc(doc(db, 'gallery', id));
+      await logAdminAction(adminUser?.email, 'DELETE_GALLERY_ITEM', `Deleted gallery item ID: ${id}`);
       toast.success('Item deleted successfully!');
       setDeleteConfirmId(null);
       setShowEditModal(false);

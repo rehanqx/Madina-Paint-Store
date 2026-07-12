@@ -30,6 +30,7 @@ export default function AdminLayout({
     { href: '/dashboard/gallery-manager', label: 'Gallery' },
     { href: '/dashboard/services-manager', label: 'Services' },
     { href: '/dashboard/messages', label: 'Messages' },
+    { href: '/dashboard/activity-logs', label: 'Activity Logs' },
   ];
 
   return (
