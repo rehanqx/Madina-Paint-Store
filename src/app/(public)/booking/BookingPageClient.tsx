@@ -10,9 +10,12 @@ interface Service {
 
 interface BookingPageClientProps {
   services: Service[];
+  selectedServiceId: string;
 }
 
-export default function BookingPageClient({ services }: BookingPageClientProps) {
+export default function BookingPageClient({ services, selectedServiceId }: BookingPageClientProps) {
+  const selectedService = services.find(s => s.id === selectedServiceId);
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
@@ -23,20 +26,18 @@ export default function BookingPageClient({ services }: BookingPageClientProps) 
           </p>
         </div>
 
-        {services.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {/* Services Overview */}
-            {services.slice(0, 3).map((service) => (
-              <div key={service.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{service.name}</h3>
-                <p className="text-xl font-extrabold text-[#2D5016]">Rs. {service.pricing}</p>
-              </div>
-            ))}
+        {selectedService && (
+          <div className="flex justify-center mb-12">
+            <div className="bg-white rounded-xl border-2 border-[#2D5016] shadow-md p-6 text-center max-w-sm w-full transition duration-300">
+              <span className="bg-[#2D5016]/10 text-[#2D5016] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 inline-block">Selected Package</span>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">{selectedService.name}</h3>
+              <p className="text-xl font-extrabold text-[#2D5016]">Rs. {selectedService.pricing}</p>
+            </div>
           </div>
         )}
 
         {/* Booking Form */}
-        <BookingForm services={services} />
+        <BookingForm services={services} initialServiceId={selectedServiceId} />
       </div>
     </div>
   );

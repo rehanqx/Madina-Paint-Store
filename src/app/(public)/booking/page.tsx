@@ -30,7 +30,19 @@ async function getServices() {
   }
 }
 
-export default async function BookingPage() {
+interface PageProps {
+  searchParams: Promise<{ service?: string }>;
+}
+
+export default async function BookingPage({ searchParams }: PageProps) {
   const services = await getServices();
-  return <BookingPageClient services={services} />;
+  const resolvedParams = await searchParams;
+  const selectedServiceId = resolvedParams.service || '';
+
+  return (
+    <BookingPageClient 
+      services={services} 
+      selectedServiceId={selectedServiceId} 
+    />
+  );
 }
