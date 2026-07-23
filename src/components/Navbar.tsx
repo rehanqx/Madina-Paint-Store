@@ -26,7 +26,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex space-x-6 lg:space-x-8 text-sm font-semibold text-gray-700">
+        <nav className="hidden lg:flex space-x-6 lg:space-x-8 text-sm font-semibold text-gray-700">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -47,7 +47,7 @@ export default function Navbar() {
         <div className="flex items-center space-x-4">
           <Link
             href="/booking"
-            className="hidden sm:inline-block bg-[#2D5016] hover:bg-[#203a10] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md transition-colors"
+            className="hidden lg:inline-block bg-[#2D5016] hover:bg-[#203a10] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md transition-colors"
           >
             Book Consultation
           </Link>
@@ -55,7 +55,7 @@ export default function Navbar() {
           {/* Mobile hamburger menu button (min 48px touch target area) */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden flex items-center justify-center w-12 h-12 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none cursor-pointer"
+            className="lg:hidden flex items-center justify-center w-12 h-12 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none cursor-pointer"
             aria-label="Toggle navigation menu"
           >
             <span className="text-xl font-bold">{isOpen ? "✕" : "☰"}</span>
@@ -65,7 +65,7 @@ export default function Navbar() {
 
       {/* Mobile Drawer Menu */}
       {isOpen && (
-        <div className="md:hidden border-t border-gray-150 bg-white shadow-xl animate-fade-in">
+        <div className="lg:hidden border-t border-gray-150 bg-white shadow-xl animate-fade-in">
           <nav className="flex flex-col p-4 space-y-3.5">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
