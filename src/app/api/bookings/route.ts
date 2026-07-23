@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Booking created:', docRef.id);
 
-    // Send confirmation email to customer
+    // Send confirmation email to customer (asynchronously, do not await)
     const customerEmailTemplate = getBookingConfirmationTemplate(
       customerName,
       serviceType,
@@ -57,13 +57,13 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_SHOP_PHONE || '+92 300 1234567'
     );
 
-    await sendEmail({
+    sendEmail({
       to: email,
       subject: 'Booking Confirmation - Paint Shop',
       html: customerEmailTemplate,
-    });
+    }).catch(err => console.error('Error sending customer confirmation email:', err));
 
-    // Send notification email to admin
+    // Send notification email to admin (asynchronously, do not await)
     const adminEmail = process.env.NODEMAILER_ADMIN_EMAIL;
     if (adminEmail) {
       const adminEmailTemplate = getAdminBookingNotificationTemplate(
@@ -76,11 +76,11 @@ export async function POST(request: NextRequest) {
         address || 'N/A'
       );
 
-      await sendEmail({
+      sendEmail({
         to: adminEmail,
         subject: 'New Booking - Paint Shop Admin',
         html: adminEmailTemplate,
-      });
+      }).catch(err => console.error('Error sending admin notification email:', err));
     }
 
     return NextResponse.json(
