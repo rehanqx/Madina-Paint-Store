@@ -254,11 +254,23 @@ export function BookingForm({ services }: BookingFormProps) {
               required
             >
               <option value="">-- Choose Painting Service --</option>
-              {services.map((service) => (
-                <option key={service.id} value={service.name}>
-                  {service.name} (Rs. {service.pricing})
-                </option>
-              ))}
+              
+              <optgroup label="General Painting Categories">
+                <option value="Interior Painting">Interior Painting</option>
+                <option value="Exterior Painting">Exterior Painting</option>
+                <option value="Commercial Painting">Commercial Painting</option>
+                <option value="Residential Painting">Residential Painting</option>
+              </optgroup>
+
+              {services.length > 0 && (
+                <optgroup label="Vetted Package Offers">
+                  {services.map((service) => (
+                    <option key={service.id} value={service.name}>
+                      {service.name} (Rs. {service.pricing})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
             {errors.serviceType && (
               <p className="text-red-500 text-xs mt-1.5 font-semibold">{errors.serviceType}</p>
