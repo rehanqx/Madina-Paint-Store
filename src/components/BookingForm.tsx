@@ -1,29 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
 import { getFriendlyErrorMessage } from '@/lib/errorHandler';
 
 interface BookingFormProps {
   services: Array<{ id: string; name: string; pricing: number }>;
+  initialServiceId?: string;
 }
 
-export function BookingForm({ services }: BookingFormProps) {
+export function BookingForm({ services, initialServiceId }: BookingFormProps) {
   const router = useRouter();
   const toast = useToast();
+
+  const initialService = services.find(s => s.id === initialServiceId);
+
   const [formData, setFormData] = useState({
     customerName: '',
     phone: '',
     email: '',
     address: '',
-    serviceType: '',
+    serviceType: initialService ? initialService.name : '',
     bookingDate: '',
     bookingTime: '',
   });
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const selected = services.find(s => s.id === initialServiceId);
+    if (selected) {
+      setFormData(prev => ({ ...prev, serviceType: selected.name }));
+    } else if (initialServiceId === '') {
+      setFormData(prev => ({ ...prev, serviceType: '' }));
+    }
+  }, [initialServiceId, services]);
 
   // Available time slots
   const timeSlots = [
