@@ -32,10 +32,10 @@ export default function Footer() {
         </div>
         <div>
           <h3 className="text-white text-lg font-semibold mb-4">Contact Info</h3>
-          <ul className="space-y-2 text-sm">
-            <li>Email: info@madinapaintstore.com</li>
-            <li>Phone: +1 (555) 123-4567</li>
-            <li>Address: 123 Main Street, Paint City</li>
+          <ul className="space-y-2 text-sm text-gray-400">
+            <li>Email: {process.env.NEXT_PUBLIC_SHOP_EMAIL || 'madinapaintstore@gmail.com'}</li>
+            <li>Phone: {process.env.NEXT_PUBLIC_SHOP_PHONE || '+92 300 6893082'}</li>
+            <li>Address: {process.env.NEXT_PUBLIC_SHOP_ADDRESS || 'Madina Town, Nirala Sweet, Khanewal'}</li>
           </ul>
         </div>
       </div>

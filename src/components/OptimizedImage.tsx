@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
 interface OptimizedImageProps {
@@ -8,7 +7,7 @@ interface OptimizedImageProps {
   alt: string;
   className?: string;
   fill?: boolean;
-  sizes?: string;
+  sizes?: string; // Kept for type compatibility
   width?: number;
   height?: number;
   priority?: boolean;
@@ -31,20 +30,27 @@ export default function OptimizedImage({
     setImgSrc(src || fallbackSrc);
   }, [src]);
 
-  const isDataUrl = !imgSrc || imgSrc.startsWith('data:');
+  if (fill) {
+    return (
+      <img
+        src={imgSrc}
+        alt={alt}
+        className={`${className} absolute inset-0 w-full h-full object-cover`}
+        onError={() => setImgSrc(fallbackSrc)}
+        loading={priority ? 'eager' : 'lazy'}
+      />
+    );
+  }
 
   return (
-    <Image
+    <img
       src={imgSrc}
       alt={alt}
       className={className}
-      fill={fill}
-      sizes={sizes}
-      width={fill ? undefined : (width || 400)}
-      height={fill ? undefined : (height || 300)}
-      priority={priority}
+      width={width || 400}
+      height={height || 300}
       onError={() => setImgSrc(fallbackSrc)}
-      unoptimized={isDataUrl}
+      loading={priority ? 'eager' : 'lazy'}
     />
   );
 }
