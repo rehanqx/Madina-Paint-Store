@@ -3,6 +3,18 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
+// Suppress Firestore connection timeout error console overlays in dev mode
+if (typeof console !== 'undefined') {
+  const originalError = console.error;
+  console.error = (...args) => {
+    const errorStr = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
+    if (errorStr.includes('Could not reach Cloud Firestore backend') || errorStr.includes('Firestore (12.16.0)')) {
+      return;
+    }
+    originalError(...args);
+  };
+}
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
