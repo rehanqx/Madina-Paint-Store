@@ -31,7 +31,7 @@ export default function OptimizedImage({
     setImgSrc(src || fallbackSrc);
   }, [src]);
 
-  const isDataUrl = !src || src.startsWith('data:');
+  const isDataUrl = !imgSrc || imgSrc.startsWith('data:');
 
   return (
     <Image
