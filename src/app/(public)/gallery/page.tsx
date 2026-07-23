@@ -19,15 +19,26 @@ export const metadata = {
   description: 'View our portfolio of completed professional painting projects',
 };
 
+function serializeDoc<T>(doc: any): T {
+  const data = doc.data();
+  const serialized: any = { id: doc.id };
+  for (const key of Object.keys(data)) {
+    const val = data[key];
+    if (val && typeof val === 'object' && val.toDate && typeof val.toDate === 'function') {
+      serialized[key] = val.toDate().toISOString();
+    } else {
+      serialized[key] = val;
+    }
+  }
+  return serialized as T;
+}
+
 async function getGalleryItems() {
   try {
     const galleryRef = collection(db, 'gallery');
     const q = query(galleryRef, orderBy('order', 'asc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as GalleryItem[];
+    return snapshot.docs.map((doc) => serializeDoc<GalleryItem>(doc));
   } catch (err) {
     console.error('Error fetching gallery on server:', err);
     return [];
