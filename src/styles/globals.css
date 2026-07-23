@@ -31,13 +31,17 @@ body {
 }
 
 /* Form styling */
-input[type='text'],
-input[type='email'],
-input[type='tel'],
-input[type='date'],
+input,
 textarea,
-select {
+select,
+.rbc-btn-group button {
+  color: #111827 !important; /* text-gray-900 */
   @apply transition-all duration-200;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important; /* text-gray-500 */
 }
 
 input[type='text']:focus,
