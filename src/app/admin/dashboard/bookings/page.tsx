@@ -131,8 +131,8 @@ export default function AdminBookingsPage() {
       await logAdminAction(adminUser?.email, 'UPDATE_BOOKING', `Changed booking status to ${status} for ${selectedBooking?.customerName || bookingId}`);
       toast.success(`Booking marked as ${status}!`);
 
-      // Trigger server email notification
-      await sendStatusEmail(selectedBooking, status, statusNotes);
+      // Trigger server email notification (asynchronously, do not await)
+      sendStatusEmail(selectedBooking, status, statusNotes);
 
       // Close modals
       setSelectedBooking(null);
