@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import OptimizedImage from '@/components/OptimizedImage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -230,6 +230,20 @@ export default function HomePageClient({ featuredServices, recentGallery, colorC
       toast.error(err.message || 'Failed to submit review. Please try again.');
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  // Reviews Carousel scroll controller
+  const reviewScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollReviews = (direction: 'left' | 'right') => {
+    if (reviewScrollRef.current) {
+      const { scrollLeft, clientWidth } = reviewScrollRef.current;
+      const scrollAmount = clientWidth * 0.95;
+      const scrollTo = direction === 'left' 
+        ? scrollLeft - scrollAmount
+        : scrollLeft + scrollAmount;
+      reviewScrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
     }
   };
 
@@ -615,23 +629,48 @@ export default function HomePageClient({ featuredServices, recentGallery, colorC
       </section>
 
       {/* 5. What Our Clients Say Section */}
-      <section className="py-16 md:py-24 px-4 bg-gray-50 border-t border-b border-gray-100">
+      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-gray-50 border-t border-b border-gray-100">
         <div className="container mx-auto max-w-5xl">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
             <div>
               <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">What Our Clients Say</h2>
               <p className="text-gray-500 mt-2 font-medium">Read verified feedback reviews from residential and commercial shop clients.</p>
             </div>
-            <button
-              onClick={() => setShowReviewForm(true)}
-              className="bg-[#2D5016] hover:bg-[#203a10] text-white px-5 py-3 rounded-lg font-bold text-sm transition shadow-md hover:shadow-lg shrink-0 cursor-pointer self-start md:self-auto"
-            >
-              ✍️ Write a Review
-            </button>
+            <div className="flex items-center space-x-3 self-start md:self-auto">
+              <button
+                onClick={() => setShowReviewForm(true)}
+                className="bg-[#2D5016] hover:bg-[#203a10] text-white px-5 py-3 rounded-lg font-bold text-sm transition shadow-md hover:shadow-lg cursor-pointer flex items-center gap-1.5"
+              >
+                ✍️ Write a Review
+              </button>
+              {activeReviews.length > 3 && (
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => scrollReviews('left')}
+                    className="w-10 h-10 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-gray-700 flex items-center justify-center font-bold transition hover:shadow-sm cursor-pointer"
+                    aria-label="Previous reviews"
+                  >
+                    ←
+                  </button>
+                  <button
+                    onClick={() => scrollReviews('right')}
+                    className="w-10 h-10 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-gray-700 flex items-center justify-center font-bold transition hover:shadow-sm cursor-pointer"
+                    aria-label="Next reviews"
+                  >
+                    →
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {activeReviews.slice(0, 6).map((test) => {
+          {/* Scrollable track for slide show - always 1 row, 3 columns on desktop */}
+          <div 
+            ref={reviewScrollRef}
+            className="flex overflow-x-auto gap-6 pb-6 scroll-smooth snap-x snap-mandatory scrollbar-none"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {activeReviews.map((test) => {
               const initials = test.name
                 ? test.name
                     .split(' ')
@@ -645,7 +684,7 @@ export default function HomePageClient({ featuredServices, recentGallery, colorC
               return (
                 <div 
                   key={test.id}
-                  className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow duration-300 animate-fade-in"
+                  className="snap-start shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] bg-white p-8 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 animate-fade-in"
                 >
                   <div>
                     {/* Rating Stars */}
