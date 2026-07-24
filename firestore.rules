@@ -1,54 +1,63 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Allow anyone to read public collections
-    match /services/{document=**} {
-      allow read: if true;
-      allow write: if request.auth.uid != null && hasRole('admin');
+
+    // Helper: Checks if the user is authenticated and verified as an administrator
+    function isAdmin() {
+      return request.auth != null && 
+        exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
     }
-    
-    match /gallery/{document=**} {
-      allow read: if true;
-      allow write: if request.auth.uid != null && hasRole('admin');
+
+    // 1. admin_users: Admin privilege documents
+    match /admin_users/{userId} {
+      // Allow users to read their own privilege document, and admins to read all
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      // Only existing admins can assign or modify administrator roles
+      allow write: if isAdmin();
     }
-    
-    // Bookings: customers can create, admins can read/update
-    match /bookings/{document=**} {
-      allow create: if true; // anyone can book
-      allow read: if request.auth.uid != null && hasRole('admin');
-      allow update: if request.auth.uid != null && hasRole('admin');
-      allow delete: if false;
-    }
-    
-    // Messages: anyone can create, only admin can read
-    match /messages/{document=**} {
+
+    // 2. bookings: Client appointment schedules
+    match /bookings/{bookingId} {
+      // Anyone can submit a new booking request (from public forms)
       allow create: if true;
-      allow read: if request.auth.uid != null && hasRole('admin');
-      allow update: if request.auth.uid != null && hasRole('admin');
+      // Only authenticated admins can read, update, or cancel bookings
+      allow read, update, delete: if isAdmin();
     }
-    
-    // Inventory: admin only
-    match /inventory/{document=**} {
-      allow read: if request.auth.uid != null && hasRole('admin');
-      allow write: if request.auth.uid != null && hasRole('admin');
+
+    // 3. services: Paint services catalog
+    match /services/{serviceId} {
+      // Anyone can view the services catalog
+      allow read: if true;
+      // Only admins can add, update, or delete services
+      allow write: if isAdmin();
     }
-    
-    // Customers: logged-in users can read own, admin can read all
-    match /customers/{uid} {
-      allow read: if request.auth.uid == uid || hasRole('admin');
-      allow write: if request.auth.uid == uid && uid == request.auth.uid;
+
+    // 4. gallery: Projects portfolio
+    match /gallery/{projectId} {
+      // Anyone can view the completed projects portfolio
+      allow read: if true;
+      // Only admins can add, edit, or delete projects
+      allow write: if isAdmin();
     }
-    
-    // Admin users: admin only
-    match /admin_users/{document=**} {
-      allow read: if request.auth.uid != null && hasRole('admin');
-      allow write: if false; // managed programmatically only
+
+    // 5. messages: Contact form inquiries
+    match /messages/{messageId} {
+      // Anyone can send an inquiry message
+      allow create: if true;
+      // Only admins can read or manage contact inquiries
+      allow read, update, delete: if isAdmin();
     }
-    
-    // Helper function
-    function hasRole(role) {
-      return get(/databases/$(database)/documents/admin_users/$(request.auth.uid)).data.role == role;
+
+    // 6. admin_logs: Audit logs tracking admin updates
+    match /admin_logs/{logId} {
+      // Only authenticated admins can read or append logs
+      allow read, write: if isAdmin();
+    }
+
+    // Catch-all safety rule: Deny read/write access to any other collections
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
