@@ -89,16 +89,48 @@ export default function HomePageClient({ featuredServices, recentGallery, colorC
   ];
 
   const availableColors = colorCards.length > 0 ? colorCards : defaultColors;
-  const [selectedColor, setSelectedColor] = useState(availableColors[0]);
+  const displayedColors = availableColors.slice(0, 9);
+  const [selectedColor, setSelectedColor] = useState(displayedColors[0]);
   const [customColor, setCustomColor] = useState('#2D5016');
   const [isCustomMode, setIsCustomMode] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleCopyHex = () => {
     const hexToCopy = isCustomMode ? customColor : selectedColor.hex;
-    navigator.clipboard.writeText(hexToCopy);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(hexToCopy)
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        })
+        .catch(() => {
+          fallbackCopyText(hexToCopy);
+        });
+    } else {
+      fallbackCopyText(hexToCopy);
+    }
+  };
+
+  const fallbackCopyText = (text: string) => {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.top = '0';
+      textArea.style.left = '0';
+      textArea.style.position = 'fixed';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (successful) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+    }
   };
 
   const testimonials = [
@@ -294,7 +326,7 @@ export default function HomePageClient({ featuredServices, recentGallery, colorC
               <div className="lg:col-span-7 space-y-4">
                 <h4 className="font-bold text-gray-900 text-sm uppercase tracking-wider mb-2">Preset Color Cards</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {availableColors.map((color) => {
+                  {displayedColors.map((color) => {
                     const isPicked = !isCustomMode && selectedColor.id === color.id;
                     return (
                       <button
@@ -386,6 +418,16 @@ export default function HomePageClient({ featuredServices, recentGallery, colorC
                     📅 Match Color
                   </Link>
                 </div>
+              </div>
+
+              {/* View All Colors Button (Aligned to bottom-right of the container) */}
+              <div className="lg:col-span-12 flex justify-end border-t border-gray-150 pt-4 mt-2">
+                <Link
+                  href="/colors"
+                  className="bg-[#2D5016]/10 hover:bg-[#2D5016] text-[#2D5016] hover:text-white px-5 py-2.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-sm hover:shadow-md"
+                >
+                  🌈 View All Colors
+                </Link>
               </div>
 
             </div>

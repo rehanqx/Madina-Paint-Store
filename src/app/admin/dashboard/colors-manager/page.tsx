@@ -1,12 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, addDoc, deleteDoc, doc, serverTimestamp, orderBy, query } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
-import { logAdminAction } from '@/lib/activityLog';
 import { useToast } from '@/hooks/useToast';
-import { getFriendlyErrorMessage } from '@/lib/errorHandler';
 
 interface ColorCard {
   id: string;
@@ -32,17 +28,14 @@ export default function ColorsManagerPage() {
   const fetchColors = async () => {
     setLoading(true);
     try {
-      const colorsRef = collection(db, 'color_cards');
-      const q = query(colorsRef, orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-      const items = snapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().name || '',
-        hex: doc.data().hex || '',
-        brand: doc.data().brand || '',
-      })) as ColorCard[];
+      const res = await fetch('/api/colors');
+      if (!res.ok) {
+        throw new Error('Failed to retrieve color cards');
+      }
+      const items = await res.json();
       setColors(items);
     } catch (err) {
+      console.error('Failed to load color cards:', err);
       toast.error('Failed to load color cards');
     } finally {
       setLoading(false);
@@ -69,19 +62,21 @@ export default function ColorsManagerPage() {
 
     setIsMutating(true);
     try {
-      const colorsRef = collection(db, 'color_cards');
-      await addDoc(colorsRef, {
-        name,
-        hex,
-        brand,
-        createdAt: serverTimestamp(),
+      const res = await fetch('/api/colors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          hex,
+          brand,
+          adminEmail: adminUser?.email,
+        }),
       });
 
-      await logAdminAction(
-        adminUser?.email,
-        'ADD_COLOR_CARD',
-        `Added color card "${name}" (${hex}) under brand ${brand}`
-      );
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to create color card');
+      }
 
       toast.success('Color card added successfully!');
       setName('');
@@ -90,7 +85,7 @@ export default function ColorsManagerPage() {
       setShowAddForm(false);
       fetchColors();
     } catch (err: any) {
-      toast.error(getFriendlyErrorMessage(err));
+      toast.error(err.message || 'Failed to add color card');
     } finally {
       setIsMutating(false);
     }
@@ -101,16 +96,19 @@ export default function ColorsManagerPage() {
 
     setIsMutating(true);
     try {
-      await deleteDoc(doc(db, 'color_cards', id));
-      await logAdminAction(
-        adminUser?.email,
-        'DELETE_COLOR_CARD',
-        `Deleted color card "${colorName}"`
-      );
+      const res = await fetch(`/api/colors?id=${id}&name=${encodeURIComponent(colorName)}&adminEmail=${adminUser?.email || ''}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to delete color card');
+      }
+
       toast.success('Color card deleted successfully');
       fetchColors();
     } catch (err: any) {
-      toast.error(getFriendlyErrorMessage(err));
+      toast.error(err.message || 'Failed to delete color card');
     } finally {
       setIsMutating(false);
     }

@@ -1,7 +1,6 @@
 import { Gallery } from '@/components/Gallery';
 import Link from 'next/link';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebaseAdmin';
 
 interface GalleryItem {
   id: string;
@@ -35,9 +34,7 @@ function serializeDoc<T>(doc: any): T {
 
 async function getGalleryItems() {
   try {
-    const galleryRef = collection(db, 'gallery');
-    const q = query(galleryRef, orderBy('order', 'asc'));
-    const snapshot = await getDocs(q);
+    const snapshot = await adminDb.collection('gallery').orderBy('order', 'asc').get();
     return snapshot.docs.map((doc) => serializeDoc<GalleryItem>(doc));
   } catch (err) {
     console.error('Error fetching gallery on server:', err);

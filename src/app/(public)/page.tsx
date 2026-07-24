@@ -1,6 +1,5 @@
 import HomePageClient from './HomePageClient';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, limit, orderBy } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebaseAdmin';
 
 interface Service {
   id: string;
@@ -41,9 +40,7 @@ function serializeDoc<T>(doc: any): T {
 
 async function getFeaturedServices() {
   try {
-    const servicesRef = collection(db, 'services');
-    const q = query(servicesRef, limit(3));
-    const snapshot = await getDocs(q);
+    const snapshot = await adminDb.collection('services').limit(3).get();
     return snapshot.docs.map((doc) => serializeDoc<Service>(doc));
   } catch (err) {
     console.error('Error fetching services for homepage:', err);
@@ -53,9 +50,7 @@ async function getFeaturedServices() {
 
 async function getRecentGallery() {
   try {
-    const galleryRef = collection(db, 'gallery');
-    const q = query(galleryRef, orderBy('order', 'asc'), limit(6));
-    const snapshot = await getDocs(q);
+    const snapshot = await adminDb.collection('gallery').orderBy('order', 'asc').limit(6).get();
     return snapshot.docs.map((doc) => serializeDoc<GalleryItem>(doc));
   } catch (err) {
     console.error('Error fetching gallery for homepage:', err);
@@ -65,14 +60,8 @@ async function getRecentGallery() {
 
 async function getColorCards() {
   try {
-    const colorsRef = collection(db, 'color_cards');
-    const snapshot = await getDocs(colorsRef);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      name: doc.data().name || '',
-      hex: doc.data().hex || '',
-      brand: doc.data().brand || '',
-    }));
+    const snapshot = await adminDb.collection('color_cards').get();
+    return snapshot.docs.map((doc) => serializeDoc<any>(doc));
   } catch (err) {
     console.error('Error fetching color cards for homepage:', err);
     return [];
