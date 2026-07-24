@@ -236,16 +236,29 @@ export default function HomePageClient({ featuredServices, recentGallery, colorC
   // Reviews Carousel scroll controller
   const reviewScrollRef = useRef<HTMLDivElement>(null);
 
-  const scrollReviews = (direction: 'left' | 'right') => {
-    if (reviewScrollRef.current) {
-      const { scrollLeft, clientWidth } = reviewScrollRef.current;
-      const scrollAmount = clientWidth * 0.95;
-      const scrollTo = direction === 'left' 
-        ? scrollLeft - scrollAmount
-        : scrollLeft + scrollAmount;
-      reviewScrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
-    }
-  };
+  useEffect(() => {
+    if (activeReviews.length <= 3) return;
+
+    const interval = setInterval(() => {
+      if (reviewScrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = reviewScrollRef.current;
+        const firstChild = reviewScrollRef.current.firstElementChild as HTMLElement;
+        const cardWidth = firstChild ? firstChild.offsetWidth + 24 : clientWidth;
+
+        // If we are near the end, loop back to the start
+        if (scrollLeft + clientWidth >= scrollWidth - 25) {
+          reviewScrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          reviewScrollRef.current.scrollTo({ 
+            left: scrollLeft + cardWidth, 
+            behavior: 'smooth' 
+          });
+        }
+      }
+    }, 4500);
+
+    return () => clearInterval(interval);
+  }, [activeReviews]);
 
   return (
     <div className="min-h-screen bg-gray-50 scroll-smooth">
@@ -643,24 +656,6 @@ export default function HomePageClient({ featuredServices, recentGallery, colorC
               >
                 ✍️ Write a Review
               </button>
-              {activeReviews.length > 3 && (
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => scrollReviews('left')}
-                    className="w-10 h-10 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-gray-700 flex items-center justify-center font-bold transition hover:shadow-sm cursor-pointer"
-                    aria-label="Previous reviews"
-                  >
-                    ←
-                  </button>
-                  <button
-                    onClick={() => scrollReviews('right')}
-                    className="w-10 h-10 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-gray-700 flex items-center justify-center font-bold transition hover:shadow-sm cursor-pointer"
-                    aria-label="Next reviews"
-                  >
-                    →
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 
