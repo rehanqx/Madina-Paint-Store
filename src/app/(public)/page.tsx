@@ -58,6 +58,14 @@ async function getRecentGallery() {
   }
 }
 
+interface Review {
+  id: string;
+  name: string;
+  rating: number;
+  text: string;
+  createdAt?: string;
+}
+
 async function getColorCards() {
   try {
     const snapshot = await adminDb.collection('color_cards').get();
@@ -68,11 +76,22 @@ async function getColorCards() {
   }
 }
 
+async function getReviews() {
+  try {
+    const snapshot = await adminDb.collection('reviews').orderBy('createdAt', 'desc').limit(20).get();
+    return snapshot.docs.map((doc) => serializeDoc<Review>(doc));
+  } catch (err) {
+    console.error('Error fetching reviews for homepage:', err);
+    return [];
+  }
+}
+
 export default async function HomePage() {
-  const [featuredServices, recentGallery, colorCards] = await Promise.all([
+  const [featuredServices, recentGallery, colorCards, reviews] = await Promise.all([
     getFeaturedServices(),
     getRecentGallery(),
     getColorCards(),
+    getReviews(),
   ]);
 
   return (
@@ -80,6 +99,7 @@ export default async function HomePage() {
       featuredServices={featuredServices}
       recentGallery={recentGallery}
       colorCards={colorCards}
+      reviews={reviews}
     />
   );
 }

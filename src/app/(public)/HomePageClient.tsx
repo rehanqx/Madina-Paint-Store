@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import OptimizedImage from '@/components/OptimizedImage';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/useToast';
 
 interface Service {
   id: string;
@@ -27,13 +30,22 @@ interface ColorCard {
   brand: string;
 }
 
+interface Review {
+  id: string;
+  name: string;
+  rating: number;
+  text: string;
+  createdAt?: string;
+}
+
 interface HomePageClientProps {
   featuredServices: Service[];
   recentGallery: GalleryItem[];
   colorCards?: ColorCard[];
+  reviews?: Review[];
 }
 
-export default function HomePageClient({ featuredServices, recentGallery, colorCards = [] }: HomePageClientProps) {
+export default function HomePageClient({ featuredServices, recentGallery, colorCards = [], reviews = [] }: HomePageClientProps) {
   const [showPreloader, setShowPreloader] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fadeClass, setFadeClass] = useState('opacity-100');
@@ -133,29 +145,85 @@ export default function HomePageClient({ featuredServices, recentGallery, colorC
     }
   };
 
-  const testimonials = [
+  const toast = useToast();
+
+  const defaultTestimonials = [
     {
-      id: 1,
+      id: 't1',
       name: 'Muhammad Ali',
-      initials: 'MA',
       rating: 5,
       text: 'Madina Paint Store provided exceptional service. The spectrometer color matching matched my living room walls perfectly! Vetted painters did a super clean job.',
     },
     {
-      id: 2,
+      id: 't2',
       name: 'Sarah Khan',
-      initials: 'SK',
       rating: 5,
       text: 'Highly professional team. They helped me choose the right paint grade for my commercial store facade. Recommended for fast and clean painting work.',
     },
     {
-      id: 3,
+      id: 't3',
       name: 'Usman Sheikh',
-      initials: 'US',
       rating: 5,
       text: 'Fast, on-time, and reliable estimates. They explained all material differences clearly and completed the job within budget. Very satisfied with my bedroom renovation.',
-    },
+    }
   ];
+
+  const [activeReviews, setActiveReviews] = useState<Review[]>([]);
+  
+  useEffect(() => {
+    setActiveReviews(reviews.length > 0 ? reviews : defaultTestimonials);
+  }, [reviews]);
+
+  // Review Form state
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [newReviewName, setNewReviewName] = useState('');
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewText, setNewReviewText] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReviewName.trim() || !newReviewText.trim()) {
+      toast.error('Please enter your name and review text');
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      const reviewDoc = {
+        name: newReviewName,
+        rating: newReviewRating,
+        text: newReviewText,
+        createdAt: serverTimestamp(),
+      };
+      
+      const docRef = await addDoc(collection(db, 'reviews'), reviewDoc);
+
+      const localReview: Review = {
+        id: docRef.id,
+        name: newReviewName,
+        rating: newReviewRating,
+        text: newReviewText,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Add to local state so user sees it instantly at the top
+      setActiveReviews((prev) => [localReview, ...prev]);
+
+      toast.success('Thank you! Your review has been submitted.');
+      
+      // Reset form
+      setNewReviewName('');
+      setNewReviewRating(5);
+      setNewReviewText('');
+      setShowReviewForm(false);
+    } catch (err: any) {
+      console.error('Failed to submit review:', err);
+      toast.error('Failed to submit review. Please try again.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 scroll-smooth">
@@ -538,42 +606,146 @@ export default function HomePageClient({ featuredServices, recentGallery, colorC
         </div>
       </section>
 
-      {/* 5. Testimonials Section */}
+      {/* 5. What Our Clients Say Section */}
       <section className="py-16 md:py-24 px-4 bg-gray-50 border-t border-b border-gray-100">
         <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">What Our Clients Say</h2>
-            <p className="text-gray-500 mt-2 font-medium">Read verified feedback reviews from residential and commercial shop clients.</p>
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">What Our Clients Say</h2>
+              <p className="text-gray-500 mt-2 font-medium">Read verified feedback reviews from residential and commercial shop clients.</p>
+            </div>
+            <button
+              onClick={() => setShowReviewForm(true)}
+              className="bg-[#2D5016] hover:bg-[#203a10] text-white px-5 py-3 rounded-lg font-bold text-sm transition shadow-md hover:shadow-lg shrink-0 cursor-pointer self-start md:self-auto"
+            >
+              ✍️ Write a Review
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((test) => (
-              <div 
-                key={test.id}
-                className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between"
-              >
-                <div>
-                  {/* Rating Stars */}
-                  <div className="flex space-x-1 text-[#E8B44D] mb-4">
-                    {Array.from({ length: test.rating }).map((_, i) => (
-                      <span key={i} className="text-xl">★</span>
-                    ))}
-                  </div>
-                  <p className="text-gray-600 text-sm leading-relaxed italic mb-6">"{test.text}"</p>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-[#2D5016] text-white flex items-center justify-center font-bold text-sm shadow">
-                    {test.initials}
-                  </div>
+            {activeReviews.slice(0, 6).map((test) => {
+              const initials = test.name
+                ? test.name
+                    .split(' ')
+                    .filter(Boolean)
+                    .map((n) => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2)
+                : 'U';
+
+              return (
+                <div 
+                  key={test.id}
+                  className="bg-white p-8 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow duration-300 animate-fade-in"
+                >
                   <div>
-                    <h4 className="text-sm font-bold text-gray-900 leading-none">{test.name}</h4>
-                    <p className="text-xs text-gray-400 mt-1 font-medium">Verified Customer</p>
+                    {/* Rating Stars */}
+                    <div className="flex space-x-1 text-[#E8B44D] mb-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <span key={i} className="text-xl">
+                          {i < test.rating ? '★' : '☆'}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-gray-600 text-sm leading-relaxed italic mb-6">"{test.text}"</p>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-full bg-[#2D5016]/10 text-[#2D5016] flex items-center justify-center font-bold text-sm shadow-sm border border-[#2D5016]/20">
+                      {initials}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-900 leading-none">{test.name}</h4>
+                      <p className="text-xs text-gray-400 mt-1 font-medium">Verified Customer</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
+
+        {/* Write Review Modal */}
+        {showReviewForm && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in no-print">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl max-w-md w-full overflow-hidden animate-scale-up">
+              {/* Modal Header */}
+              <div className="bg-[#2D5016] text-white px-6 py-4 flex items-center justify-between">
+                <h3 className="font-bold text-lg">Submit Your Feedback</h3>
+                <button
+                  onClick={() => setShowReviewForm(false)}
+                  className="text-white/80 hover:text-white transition font-bold text-lg cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Form */}
+              <form onSubmit={handleSubmitReview} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Your Name *</label>
+                  <input
+                    type="text"
+                    value={newReviewName}
+                    onChange={(e) => setNewReviewName(e.target.value)}
+                    placeholder="e.g. Muhammad Rehan"
+                    className="w-full bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-sm focus:border-[#2D5016] focus:bg-white outline-none text-gray-850"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Rating *</label>
+                  <div className="flex space-x-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setNewReviewRating(star)}
+                        className="text-2xl transition hover:scale-110 focus:outline-none cursor-pointer"
+                      >
+                        {star <= newReviewRating ? (
+                          <span className="text-[#E8B44D]">★</span>
+                        ) : (
+                          <span className="text-gray-300 hover:text-[#E8B44D]">★</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Your Review *</label>
+                  <textarea
+                    value={newReviewText}
+                    onChange={(e) => setNewReviewText(e.target.value)}
+                    placeholder="Tell us about your experience..."
+                    rows={4}
+                    className="w-full bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-sm focus:border-[#2D5016] focus:bg-white outline-none text-gray-850 resize-none"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center justify-end space-x-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowReviewForm(false)}
+                    className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingReview}
+                    className="bg-[#2D5016] hover:bg-[#203a10] text-white px-5 py-2.5 rounded-lg font-bold text-xs shadow transition disabled:opacity-50 cursor-pointer"
+                  >
+                    {submittingReview ? 'Submitting...' : 'Submit Review'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* 6. Call to Action Section */}
