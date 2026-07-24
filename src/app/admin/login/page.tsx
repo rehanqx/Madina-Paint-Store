@@ -121,7 +121,7 @@ export default function AdminLoginPage() {
               required
               disabled={loading}
               className="w-full h-11 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2D5016] focus:border-transparent outline-none transition text-base disabled:bg-gray-100"
-              placeholder="admin@madinapaintstore.com"
+              placeholder="admin@example.com"
             />
           </div>
 
