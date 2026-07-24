@@ -29,6 +29,7 @@ export default function AdminLayout({
     { href: '/admin/dashboard/inventory', label: 'Inventory' },
     { href: '/admin/dashboard/gallery-manager', label: 'Gallery' },
     { href: '/admin/dashboard/services-manager', label: 'Services' },
+    { href: '/admin/dashboard/colors-manager', label: 'Color Cards' },
     { href: '/admin/dashboard/messages', label: 'Messages' },
     { href: '/admin/dashboard/activity-logs', label: 'Activity Logs' },
   ];

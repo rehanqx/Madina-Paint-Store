@@ -61,6 +61,14 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // 8. color_cards: Paint color cards
+    match /color_cards/{cardId} {
+      // Anyone can read color cards for selection
+      allow read: if true;
+      // Only authenticated admins can modify color cards
+      allow write: if isAdmin();
+    }
+
     // Catch-all safety rule: Deny read/write access to any other collections
     match /{document=**} {
       allow read, write: if false;

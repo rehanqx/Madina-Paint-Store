@@ -63,16 +63,34 @@ async function getRecentGallery() {
   }
 }
 
+async function getColorCards() {
+  try {
+    const colorsRef = collection(db, 'color_cards');
+    const snapshot = await getDocs(colorsRef);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().name || '',
+      hex: doc.data().hex || '',
+      brand: doc.data().brand || '',
+    }));
+  } catch (err) {
+    console.error('Error fetching color cards for homepage:', err);
+    return [];
+  }
+}
+
 export default async function HomePage() {
-  const [featuredServices, recentGallery] = await Promise.all([
+  const [featuredServices, recentGallery, colorCards] = await Promise.all([
     getFeaturedServices(),
     getRecentGallery(),
+    getColorCards(),
   ]);
 
   return (
     <HomePageClient
       featuredServices={featuredServices}
       recentGallery={recentGallery}
+      colorCards={colorCards}
     />
   );
 }

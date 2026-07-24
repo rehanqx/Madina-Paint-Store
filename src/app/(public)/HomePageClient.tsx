@@ -20,12 +20,20 @@ interface GalleryItem {
   service_category: string;
 }
 
+interface ColorCard {
+  id: string;
+  name: string;
+  hex: string;
+  brand: string;
+}
+
 interface HomePageClientProps {
   featuredServices: Service[];
   recentGallery: GalleryItem[];
+  colorCards?: ColorCard[];
 }
 
-export default function HomePageClient({ featuredServices, recentGallery }: HomePageClientProps) {
+export default function HomePageClient({ featuredServices, recentGallery, colorCards = [] }: HomePageClientProps) {
   const [showPreloader, setShowPreloader] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fadeClass, setFadeClass] = useState('opacity-100');
@@ -69,6 +77,30 @@ export default function HomePageClient({ featuredServices, recentGallery }: Home
       }, 700);
     }
   };
+
+  // Color Picker State
+  const defaultColors = [
+    { id: 'd1', name: 'Madina Forest Green', hex: '#2D5016', brand: 'Exclusive Store Color' },
+    { id: 'd2', name: 'Imperial Sun Gold', hex: '#E8B44D', brand: 'Premium Gold Finish' },
+    { id: 'd3', name: 'Soft Cream Silk', hex: '#FDFBF7', brand: 'ICI Dulux' },
+    { id: 'd4', name: 'Jotun Desert Rose', hex: '#C29B96', brand: 'Jotun' },
+    { id: 'd5', name: 'Berger Ocean Mist', hex: '#9BB8C2', brand: 'Berger Paints' },
+    { id: 'd6', name: 'Master Royal Velvet', hex: '#583F66', brand: 'Master Paints' },
+  ];
+
+  const availableColors = colorCards.length > 0 ? colorCards : defaultColors;
+  const [selectedColor, setSelectedColor] = useState(availableColors[0]);
+  const [customColor, setCustomColor] = useState('#2D5016');
+  const [isCustomMode, setIsCustomMode] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyHex = () => {
+    const hexToCopy = isCustomMode ? customColor : selectedColor.hex;
+    navigator.clipboard.writeText(hexToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const testimonials = [
     {
       id: 1,
@@ -241,6 +273,123 @@ export default function HomePageClient({ featuredServices, recentGallery }: Home
               ))}
             </div>
           )}
+
+          {/* Color Picker Sub-Section */}
+          <div className="border-t border-gray-150 pt-16 mt-16">
+            <div className="text-center mb-10">
+              <span className="text-xs font-bold text-[#2D5016] uppercase tracking-[0.2em] bg-[#2D5016]/10 px-4 py-1.5 rounded-full mb-3 inline-block">
+                Digital Spectrometer
+              </span>
+              <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900">
+                Interactive Color Picker & Matching
+              </h3>
+              <p className="text-gray-500 mt-2 font-medium max-w-xl mx-auto text-sm">
+                Explore our catalog of premium brand shades or mix a custom tone. Select a color to copy its Hex code or book an exact match consultation.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start bg-gray-50 p-6 md:p-8 rounded-2xl border border-gray-200">
+              
+              {/* Left Column: Preset Color Cards (7 spans) */}
+              <div className="lg:col-span-7 space-y-4">
+                <h4 className="font-bold text-gray-900 text-sm uppercase tracking-wider mb-2">Preset Color Cards</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {availableColors.map((color) => {
+                    const isPicked = !isCustomMode && selectedColor.id === color.id;
+                    return (
+                      <button
+                        key={color.id}
+                        onClick={() => {
+                          setSelectedColor(color);
+                          setIsCustomMode(false);
+                        }}
+                        className={`bg-white p-3 rounded-xl border transition-all duration-200 text-left hover:shadow-md cursor-pointer ${
+                          isPicked
+                            ? 'border-2 border-[#2D5016] shadow-[0_4px_16px_rgba(45,80,22,0.15)] scale-[1.02]'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div
+                          className="h-16 rounded-lg mb-3 shadow-inner border border-gray-100"
+                          style={{ backgroundColor: color.hex }}
+                        />
+                        <h5 className="font-bold text-gray-900 text-xs truncate leading-tight">{color.name}</h5>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5 truncate">{color.brand}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Color Selector trigger */}
+                <div className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+                  <div>
+                    <h5 className="font-bold text-gray-900 text-xs uppercase tracking-wider">Custom Color Scanner</h5>
+                    <p className="text-[11px] text-gray-400 mt-0.5">Drag the color wheel to mix any custom shade dynamically.</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={customColor}
+                      onChange={(e) => {
+                        setCustomColor(e.target.value);
+                        setIsCustomMode(true);
+                      }}
+                      className="w-12 h-10 border border-gray-200 rounded-lg p-0 cursor-pointer"
+                    />
+                    <button
+                      onClick={() => setIsCustomMode(true)}
+                      className={`px-4 py-2 rounded-lg font-bold text-xs transition duration-200 cursor-pointer ${
+                        isCustomMode
+                          ? 'bg-[#2D5016] text-white'
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      Use Custom
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Selection Preview (5 spans) */}
+              <div className="lg:col-span-5 bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
+                <h4 className="font-bold text-gray-900 text-sm uppercase tracking-wider mb-4 self-start">Active Match Selection</h4>
+                
+                <div 
+                  className="w-full h-44 rounded-xl shadow-inner mb-6 border border-gray-200 relative"
+                  style={{ backgroundColor: isCustomMode ? customColor : selectedColor.hex }}
+                >
+                  <span className="absolute bottom-3 right-3 bg-white/95 text-gray-900 px-3 py-1 rounded-md text-xs font-bold font-mono shadow-sm border border-gray-100">
+                    {isCustomMode ? customColor : selectedColor.hex}
+                  </span>
+                </div>
+
+                <h4 className="text-xl font-extrabold text-gray-900 truncate max-w-full">
+                  {isCustomMode ? 'Custom Mixed Shade' : selectedColor.name}
+                </h4>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1 mb-6">
+                  {isCustomMode ? 'Personalized Code' : selectedColor.brand}
+                </p>
+
+                <div className="grid grid-cols-2 gap-3 w-full">
+                  <button
+                    onClick={handleCopyHex}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-lg text-xs transition cursor-pointer"
+                  >
+                    {copied ? '✓ Copied' : '📋 Copy Hex'}
+                  </button>
+                  <Link
+                    href={`/booking?service=Color%20Matching&color=${encodeURIComponent(
+                      isCustomMode ? customColor : `${selectedColor.name} (${selectedColor.hex})`
+                    )}`}
+                    className="bg-[#2D5016] hover:bg-[#203a10] text-white font-bold py-3 rounded-lg text-xs transition cursor-pointer flex items-center justify-center"
+                  >
+                    📅 Match Color
+                  </Link>
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
       </section>
 
