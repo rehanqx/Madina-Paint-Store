@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import OptimizedImage from '@/components/OptimizedImage';
 
@@ -25,6 +26,49 @@ interface HomePageClientProps {
 }
 
 export default function HomePageClient({ featuredServices, recentGallery }: HomePageClientProps) {
+  const [showPreloader, setShowPreloader] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [fadeClass, setFadeClass] = useState('opacity-100');
+
+  const slides = [
+    { src: '/front.jpg', title: 'Welcome to Madina Paint Store', subtitle: 'Khanewal’s Premium Paint & Spectrometer Color Matching Destination' },
+    { src: '/storefront.jpg', title: 'Professional Site Consultations', subtitle: 'Schedule an estimate with our vetted local painting experts' },
+    { src: '/interior.jpg', title: 'Top International & Local Brands', subtitle: 'Authorized Dealer of Master, Berger, ICI Dulux, Jotun & More' }
+  ];
+
+  // Check sessionStorage on load to skip if already shown in this session
+  useEffect(() => {
+    const isShown = sessionStorage.getItem('preloader_shown');
+    if (isShown) {
+      setShowPreloader(false);
+    }
+  }, []);
+
+  // Slideshow interval
+  useEffect(() => {
+    if (!showPreloader) return;
+    const interval = setInterval(() => {
+      setFadeClass('opacity-0');
+      setTimeout(() => {
+        setCurrentSlide((prev) => (prev + 1) % slides.length);
+        setFadeClass('opacity-100');
+      }, 500);
+    }, 4500);
+
+    return () => clearInterval(interval);
+  }, [showPreloader]);
+
+  const handleEnterStore = () => {
+    sessionStorage.setItem('preloader_shown', 'true');
+    const overlay = document.getElementById('preloader-overlay');
+    if (overlay) {
+      overlay.style.opacity = '0';
+      overlay.style.transform = 'scale(1.05)';
+      setTimeout(() => {
+        setShowPreloader(false);
+      }, 700);
+    }
+  };
   const testimonials = [
     {
       id: 1,
@@ -51,6 +95,70 @@ export default function HomePageClient({ featuredServices, recentGallery }: Home
 
   return (
     <div className="min-h-screen bg-gray-50 scroll-smooth">
+      {/* Preloader Slideshow Overlay */}
+      {showPreloader && (
+        <div
+          id="preloader-overlay"
+          className="fixed inset-0 z-[9999] flex flex-col justify-center items-center text-white select-none transition-all duration-700 ease-out"
+          style={{ backgroundColor: '#0A0E06' }}
+        >
+          {/* Background Slideshow */}
+          <div className="absolute inset-0 z-0">
+            <div
+              className={`absolute inset-0 bg-cover bg-center transition-opacity duration-500 ease-in-out ${fadeClass}`}
+              style={{
+                backgroundImage: `linear-gradient(to bottom, rgba(10,14,6,0.85), rgba(10,14,6,0.9)), url('${slides[currentSlide].src}')`,
+              }}
+            />
+          </div>
+
+          {/* Floating Blur Orbs */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
+            <div className="absolute top-10 left-10 w-96 h-96 bg-[#2D5016]/10 rounded-full blur-[100px] animate-pulse"></div>
+            <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#E8B44D]/5 rounded-full blur-[100px] animate-pulse"></div>
+          </div>
+
+          {/* Overlay Content */}
+          <div className="relative z-20 max-w-2xl px-6 text-center flex flex-col items-center">
+            <span className="bg-[#E8B44D]/10 border border-[#E8B44D]/30 text-[#E8B44D] text-xs font-bold uppercase tracking-[0.2em] px-4 py-2 rounded-full mb-6">
+              Khanewal, Punjab
+            </span>
+
+            {/* Title & Subtitle */}
+            <div className="h-44 md:h-52 flex flex-col justify-center">
+              <h1 className={`text-4xl md:text-5xl font-extrabold mb-4 tracking-tight leading-tight transition-opacity duration-500 ${fadeClass}`}>
+                {slides[currentSlide].title}
+              </h1>
+              <p className={`text-base md:text-lg text-gray-300 max-w-xl mx-auto leading-relaxed transition-opacity duration-500 ${fadeClass}`}>
+                {slides[currentSlide].subtitle}
+              </p>
+            </div>
+
+            {/* Enter CTA Button */}
+            <button
+              onClick={handleEnterStore}
+              className="group relative inline-flex items-center gap-3 bg-[#E8B44D] hover:bg-[#d4a03b] text-gray-900 font-bold px-10 py-4 rounded-full text-base transition duration-300 shadow-[0_8px_30px_rgb(232,180,77,0.3)] hover:shadow-[0_12px_40px_rgb(232,180,77,0.5)] cursor-pointer mt-8"
+            >
+              <span>Enter Store</span>
+              <span className="text-xl transition-transform duration-300 group-hover:translate-x-1.5">➔</span>
+              <span className="absolute inset-0 rounded-full border-2 border-[#E8B44D]/40 scale-100 group-hover:scale-110 opacity-100 group-hover:opacity-0 transition duration-500"></span>
+            </button>
+
+            {/* Dot Indicators */}
+            <div className="flex gap-2.5 mt-16">
+              {slides.map((_, index) => (
+                <div
+                  key={index}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    currentSlide === index ? 'w-8 bg-[#E8B44D]' : 'w-2 bg-white/20'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1. Hero Section */}
       <section 
         className="relative bg-black text-white py-24 md:py-36 px-4 bg-cover bg-center overflow-hidden border-b border-gray-100"
