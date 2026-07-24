@@ -4,6 +4,7 @@ import "../styles/globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Chatbot } from "@/components/Chatbot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -119,6 +120,7 @@ export default function RootLayout({
           <AuthProvider>
             <ToastProvider>
               {children}
+              <Chatbot />
             </ToastProvider>
           </AuthProvider>
         </ErrorBoundary>
