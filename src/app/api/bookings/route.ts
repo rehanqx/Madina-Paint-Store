@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       serviceType,
       bookingDate,
       bookingTime,
-      process.env.NEXT_PUBLIC_SHOP_PHONE || '+92 300 1234567'
+      process.env.NEXT_PUBLIC_SHOP_PHONE || '+92 300 6893082'
     );
 
     sendEmail({

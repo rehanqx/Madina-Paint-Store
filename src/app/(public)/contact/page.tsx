@@ -6,8 +6,8 @@ export const metadata = {
 };
 
 export default function ContactPage() {
-  const shopPhone = process.env.NEXT_PUBLIC_SHOP_PHONE || '+92 300 1234567';
-  const shopEmail = process.env.NEXT_PUBLIC_SHOP_EMAIL || 'info@paintshop.com';
+  const shopPhone = process.env.NEXT_PUBLIC_SHOP_PHONE || '+92 300 6893082';
+  const shopEmail = process.env.NEXT_PUBLIC_SHOP_EMAIL || 'madinapaintstore@gmail.com';
   const shopAddress = process.env.NEXT_PUBLIC_SHOP_ADDRESS || 'Madina Town, Nirala Sweet, Khanewal';
 
   return (
