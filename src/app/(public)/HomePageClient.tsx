@@ -190,17 +190,25 @@ export default function HomePageClient({ featuredServices, recentGallery, colorC
 
     setSubmittingReview(true);
     try {
-      const reviewDoc = {
-        name: newReviewName,
-        rating: newReviewRating,
-        text: newReviewText,
-        createdAt: serverTimestamp(),
-      };
-      
-      const docRef = await addDoc(collection(db, 'reviews'), reviewDoc);
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newReviewName,
+          rating: newReviewRating,
+          text: newReviewText,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to submit review');
+      }
+
+      const data = await res.json();
 
       const localReview: Review = {
-        id: docRef.id,
+        id: data.id,
         name: newReviewName,
         rating: newReviewRating,
         text: newReviewText,
@@ -219,7 +227,7 @@ export default function HomePageClient({ featuredServices, recentGallery, colorC
       setShowReviewForm(false);
     } catch (err: any) {
       console.error('Failed to submit review:', err);
-      toast.error('Failed to submit review. Please try again.');
+      toast.error(err.message || 'Failed to submit review. Please try again.');
     } finally {
       setSubmittingReview(false);
     }
